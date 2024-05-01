@@ -1,0 +1,5 @@
+#!/bin/bash
+redocly bundle openapi.yaml --output bundled.yaml
+redocly lint bundled.yaml
+redocly build-docs openapi.yaml --output=output.html
+redocly preview-docs bundled.yaml
