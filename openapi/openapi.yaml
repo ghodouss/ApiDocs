@@ -51,6 +51,7 @@ paths:
       tags:
         - text
       description: Returns a list of all created indices tied to your api key.
+      operationId: listIndicies 
       parameters:
         - name: api_key
           in: query
@@ -83,6 +84,7 @@ paths:
       tags:
         - text
       description: Returns metadata of a specified index.
+      operationId: getSingleIndexInfo 
       parameters:
         - name: index_id
           in: path
@@ -119,6 +121,123 @@ paths:
               example:
                 error: unauthorized
                 status: 401
+
+  /text/v1/index/{index_id}/doc/commit:
+    post:
+      summary: Commit Docs 
+      tags:
+        - text 
+      description: >-
+        TODO
+      operationId: commitDocs 
+      parameters: 
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+      responses:
+        '200':
+          description: Index Information
+          content:
+            application/json:
+              example:
+                index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
+                name: Index Name 
+                state: ready 
+              schema:
+                $ref: '#/components/schemas/IndexInfo'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+      requestBody:
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/ApiKeyOnly'
+
+  /text/v1/index/{index_id}/doc/unstage:
+    post:
+      summary: Unstage Docs 
+      tags:
+        - text 
+      description: >-
+        TODO
+      operationId: unstageDocs 
+      parameters: 
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+      responses:
+        '200':
+          description: Index Information
+          content:
+            application/json:
+              example:
+                index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
+                name: Index Name 
+                state: ready 
+              schema:
+                $ref: '#/components/schemas/IndexInfo'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+      requestBody:
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/ApiKeyOnly'
+
+  /text/v1/index/{index_id}/train:
+    post:
+      summary: Train an Index 
+      tags:
+        - text 
+      description: >-
+        This endpoint trains index on all docs that have been uploaded to it.
+        Once an index has been trained, the docs are queryable and the model
+        is able to add new docs to the query or to run predictions.
+      operationId: trainIndex 
+      parameters: 
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+      responses:
+        '200':
+          description: Index Information
+          content:
+            application/json:
+              example:
+                index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
+                name: Index Name 
+                state: training 
+              schema:
+                $ref: '#/components/schemas/IndexInfo'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/trainIndexParameters'
+
 servers:
   - url: https://lit.review/api
     description: Production server
@@ -137,6 +256,12 @@ components:
         To obtain one, please follow these steps:
           - email hello@lit.review requesting an api key
   schemas:
+    ApiKeyOnly:
+      description: Api Key 
+      type: object
+      properties:
+        api_key:
+          type: string
     createIndexInput:
       description: Information Needed to create an index 
       type: object
@@ -155,3 +280,21 @@ components:
           type: string
         name:
           type: string
+    trainIndexParameters:
+      description: Available parameters to train an index 
+      type: object
+      properties:
+        api_key:
+          type: string
+        label_field_names:
+          type: array
+          items: 
+            type: string
+        tag_field_names:
+          type: array
+          items: 
+            type: string
+        doc_hierarchy:
+          type: array
+          items: 
+            type: string
