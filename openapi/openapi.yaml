@@ -122,6 +122,48 @@ paths:
                 error: unauthorized
                 status: 401
 
+  /text/v1/index/{index_id}/doc:
+    post:
+      summary: Upload Docs 
+      tags:
+        - text 
+      description: >-
+        TODO
+      operationId: writeDocs 
+      parameters: 
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+      responses:
+        '200':
+          description: Index Information
+          content:
+            application/json:
+              example:
+                - doc_id: "doc1"
+                  field_you_choose_for_predictions_1: 0.84
+                  another_field_you_choose_for_predictions: 0.04
+                - doc_id: "doc2"
+                  field_you_choose_for_predictions_1: 0.32
+                  another_field_you_choose_for_predictions: 0.02
+              schema:
+                items:
+                  $ref: '#/components/schemas/DocPredictions'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocUploadInfo'
+
   /text/v1/index/{index_id}/doc/commit:
     post:
       summary: Commit Docs 
@@ -298,3 +340,38 @@ components:
           type: array
           items: 
             type: string
+    DocPredictions:
+      description: Return value of writing docs 
+      type: object
+      properties:
+        doc_id: 
+          type: string 
+        field_you_choose_for_predictions_1:
+          type: number 
+        another_field_you_choose_for_predictions:
+          type: number
+    DocUploadInfo:
+      description: Example of doc upload schema 
+      type: object
+      properties:
+        doc: 
+          type: string 
+        boolean_metadata_field_1:
+          type: boolean
+        any_name_can_be_used:
+          type: boolean
+        tag_metadata:
+          type: array
+          items: 
+            type: string
+        tag_metadata_any_name:
+          type: array
+          items: 
+            type: string
+        metadata_field_26:
+          type: number
+        any_other_metadata_name:
+          type: array
+          items: 
+            type: integer
+
