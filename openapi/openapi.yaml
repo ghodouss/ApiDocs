@@ -138,11 +138,13 @@ paths:
             application/json:
               example:
                 - doc_id: "doc1"
-                  field_you_choose_for_predictions_1: 0.84
-                  another_field_you_choose_for_predictions: 0.04
+                  predictions:
+                    field_you_choose_for_predictions_1: 0.84
+                    another_field_you_choose_for_predictions: 0.04
                 - doc_id: "doc2"
-                  field_you_choose_for_predictions_1: 0.32
-                  another_field_you_choose_for_predictions: 0.02
+                  predictions:
+                    field_you_choose_for_predictions_1: 0.84
+                    another_field_you_choose_for_predictions: 0.04
               schema:
                 items:
                   $ref: '#/components/schemas/DocPredictions'
@@ -426,10 +428,13 @@ components:
       properties:
         doc_id: 
           type: string 
-        field_you_choose_for_predictions_1:
-          type: number 
-        another_field_you_choose_for_predictions:
-          type: number
+        predictions:
+          type: object
+          properties:
+            field_you_choose_for_predictions_1:
+              type: number 
+            another_field_you_choose_for_predictions:
+              type: number
     DocUploadInfo:
       description: Example of doc upload schema 
       type: object
