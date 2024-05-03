@@ -163,6 +163,91 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DocUploadInfo'
+    get:
+      summary: Query Docs 
+      tags:
+        - text
+      description: Returns a list of all created indices tied to your api key.
+      operationId: getDocs 
+      parameters:
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+        - name: api_key
+          in: query
+          required: true
+          description: API Key.
+          schema:
+            type: string
+        - name: query 
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: category_ids
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filters 
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: sort_by 
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: ascending 
+          in: query
+          required: false
+          schema:
+            type: boolean 
+        - name: summarize_by 
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A list of index metadata
+          content:
+            application/json:
+              example:
+                - docs:
+                  - doc_id: doc_id_1
+                    text: summarize text_1
+                    metadata_field_1 : "example meta info"
+                    prediction_field_1: 0.83
+                    another_prediction_field: 0.03
+                    categories:
+                      - category_id: 32
+                        short_title: example topic descriptor
+                        prevelance: 0.84
+                      - category_id: 68
+                        short_title: example topic descriptor
+                        prevelance: 0.
+                - categories:
+                  - category_id: 12
+                    short_title: example topic descriptor_1
+                    prevelance: 0.31
+                    one_sentence_summary: This is a one sentence summary of a topic that exists in the returned documents
+                    executive_paragraph_summary: This is a one paragraph .... summary of the topic that exists in the returned documents.
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
 
   /text/v1/index/{index_id}/doc/commit:
     post:
