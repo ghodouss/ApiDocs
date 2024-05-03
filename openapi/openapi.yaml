@@ -5,7 +5,7 @@ info:
   description: |-
     Access Forem articles, users and other resources via API.
             For a real-world example of Forem in action, check out [DEV](https://www.dev.to).
-            All endpoints can be accessed with the 'api-key' header and a accept header, but
+            All endpoints can be accessed with the 'api_key' header and a accept header, but
             some of them are accessible publicly without authentication.
 
             Dates and date times, unless otherwise specified, must be in
@@ -13,7 +13,7 @@ info:
 paths:
   /text/v1/index:
     post:
-      summary: Create a new Index 
+      summary: Create Index 
       tags:
         - text 
       description: >-
@@ -47,7 +47,7 @@ paths:
             schema:
               $ref: '#/components/schemas/createIndexInput'
     get:
-      summary: Get list of Indices
+      summary: List Indices
       tags:
         - text
       description: Returns a list of all created indices tied to your api key.
@@ -77,28 +77,65 @@ paths:
               example:
                 error: unauthorized
                 status: 401
+  /text/v1/index/{index_id}:
+    get:
+      summary: Single Index Info
+      tags:
+        - text
+      description: Returns metadata of a specified index.
+      parameters:
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+        - name: api_key
+          in: query
+          required: true
+          description: API Key.
+          schema:
+            type: string
+        - name: index_id 
+          in: query
+          required: true
+          description: Index Id.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A dictionary of index metadata
+          content:
+            application/json:
+              example:
+                index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
+                name: Index_Name_1 
+                state: untrained 
+              schema:
+                $ref: '#/components/schemas/IndexInfo'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
 servers:
   - url: https://lit.review/api
     description: Production server
 security:
-  - api-key: []
+  - api_key: []
 components:
   securitySchemes:
-    api-key:
+    api_key:
       type: apiKey
       name: api_key
       in: query
       description: >-
         API Key authentication.
 
-        Articles API require a DEV API key.
+        API requires a DEV API key.
         To obtain one, please follow these steps:
-          - visit https://dev.to/settings/extensions
-          - in the "DEV API Keys" section create a new key by adding a
-            description and clicking on "Generate API Key"
-
-            ![obtain a DEV API Key](https://user-images.githubusercontent.com/37842/172718105-bd93664e-76e0-477d-99c4-265dda0b06c5.png)
-
+          - email hello@lit.review requesting an api key
   schemas:
     createIndexInput:
       description: Information Needed to create an index 
