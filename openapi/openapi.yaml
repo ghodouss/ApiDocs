@@ -183,11 +183,16 @@ paths:
           required: false
           schema:
             type: string
-        - name: category_ids
+        - name: topic_ids 
           in: query
           required: false
           schema:
             type: string
+        - name: topic_group_id 
+          in: query
+          required: false
+          schema:
+            type: integer 
         - name: filters 
           in: query
           required: false
@@ -215,7 +220,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: A list of document objects and a list of high level categories.
+          description: A list of document objects and a list of high level topics.
           content:
             application/json:
               example:
@@ -228,19 +233,25 @@ paths:
                     predictions:
                       prediction_field_1: 0.83
                       another_prediction_field: 0.03
-                    categories:
-                      - category_id: 32
+                    topics:
+                      - topic_id: 32
                         short_title: example topic descriptor
                         prevelance: 0.84
-                      - category_id: 68
-                        short_title: example topic descriptor
-                        prevelance: 0.
-                - categories:
-                  - category_id: 12
+                        topic_group_id: 3
+                        topic_group_short_title: Short Group Title
+                      - topic_id: 68
+                        short_title: example topic descriptor2
+                        prevelance: 0.05
+                        topic_group_id: 5
+                        topic_group_short_title: Short Group Title
+                - topics:
+                  - topic_id: 12
                     short_title: example topic descriptor_1
                     prevelance: 0.31
                     one_sentence_summary: This is a one sentence summary of a topic that exists in the returned documents
                     executive_paragraph_summary: This is a one paragraph .... summary of the topic that exists in the returned documents.
+                    topic_group_id: 3
+                    topic_group_short_title: Short Group Title
         '401':
           description: Unauthorized
           content:
@@ -442,24 +453,36 @@ components:
       description: Example of doc upload schema 
       type: object
       properties:
-        doc: 
-          type: string 
-        boolean_metadata_field_1:
+        api_key:
+          type: string
+        save:
           type: boolean
-        any_name_can_be_used:
-          type: boolean
-        tag_metadata:
+        docs:
           type: array
-          items: 
-            type: string
-        tag_metadata_any_name:
-          type: array
-          items: 
-            type: string
-        metadata_field_26:
-          type: number
-        any_other_metadata_name:
-          type: array
-          items: 
-            type: integer
-
+          items:
+            type: object
+            properties:
+              doc: 
+                type: string 
+                description: The core content you want indexed.
+              doc_id: 
+                type: string 
+                description: Will use if provided. Otherwise will be generated as a sha of the content. If you a doc_id already exists in the index, the conflicting fields will use the new doc information.
+              boolean_metadata_field_1:
+                type: boolean
+              any_name_can_be_used:
+                type: boolean
+              tag_metadata:
+                type: array
+                items: 
+                  type: string
+              tag_metadata_any_name:
+                type: array
+                items: 
+                  type: string
+              metadata_field_26:
+                type: number
+              any_other_metadata_name:
+                type: array
+                items: 
+                  type: integer
