@@ -324,7 +324,8 @@ paths:
       tags:
         - text 
       description: >-
-        TODO
+        Applies the changes made to the staging index to the production index. 
+        This is a locking operation. No data can be uploaded, trained, or committed while a commit is in progress.
       operationId: commitDocs 
       parameters: 
         - name: index_id
@@ -362,7 +363,7 @@ paths:
       tags:
         - text 
       description: >-
-        TODO
+        Revert all existing changes to the staging index back to the state of the production index.
       operationId: unstageDocs 
       parameters: 
         - name: index_id
@@ -400,9 +401,9 @@ paths:
       tags:
         - text 
       description: >-
-        This endpoint trains index on all docs that have been uploaded to it.
+        This endpoint trains on all docs that live in the production index.
         Once an index has been trained, the docs are queryable and the model
-        is able to add new docs to the query or to run predictions.
+        is able to automatically index all new uploaded docs and (if relevant) run predictions.
       operationId: trainIndex 
       parameters: 
         - name: index_id
@@ -485,14 +486,25 @@ components:
         api_key:
           type: string
         label_field_names:
+          description: >-
+            A list of fields that denote binary labels. The model
+            will use these fields as training data and predict their
+            values for all future docs to be uploaded. Valid values for field1 in each doc are `1,0,-1,True,False,NULL`
+
+
+            Example `["field1","field2"]`. Predictions will be made written to `pred_field1` and `pred_field2`.
           type: array
           items: 
             type: string
         tag_field_names:
+          description: >-
+            A list of fields that contain tags. E.g. if a doc has an attribute `genre` it might be tagged with string `fiction,non-fiction,sci-fi`. The presence of a tag implies a True and the absence of a tag implies a False for training input. If that is not that case, consider manually converting your tags to binary and passing those fields into the `label_field_names`
           type: array
           items: 
             type: string
         doc_hierarchy:
+          description: >-
+            This is used for adding hierarchy to the indexing model by leveraging attributes present in the uploaded data. This is a more advanced feature for those familiar with Bayesian analysis. 
           type: array
           items: 
             type: string
