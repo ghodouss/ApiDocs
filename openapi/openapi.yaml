@@ -189,10 +189,10 @@ paths:
         Each doc contains a the text excerpt that best matches your query, all prediction values associated with the doc, all metadata
         fields associated with the doc, and a ordered list of the topics associated with each doc.
 
-        2. A ranked list of topic objects. These are sorted by prevalance. These provide a high level overview of the data the client is querying. 
+        2. A ranked list of topic objects. These are sorted by prevalance. These provide a granular overview of the data the client is querying. 
         Each topic has a `topic_id` that can be used for additional downstream queries.
 
-        3. A ranked list of topic group objects. These are sorted by prevalance. These provide an even more high level overview of the data the client is querying. 
+        3. A ranked list of topic group objects. These are sorted by prevalance. These provide a high level overview of the topics and data the client is querying. 
         Each topic group has a `topic_group_id` that can be used for additional downstream queries.
 
       operationId: getDocs 
@@ -222,23 +222,35 @@ paths:
           required: false
           description: >-
             Supports filtering on a single or multiple topics. 
-            Topics are unsupervised high level categories learned from the clients data at training time that can be used to index the data.
+            Topics are unsupervised granular themes inferred from the clients data at training time that can be used to index the data.
             Expected input format is a commma seperated list of topic_ids eg `1,12,25` 
           schema:
             type: string
         - name: topic_group_id 
           in: query
           required: false
+          description: >-
+            Supports filtering on a single topic group. 
+            Topic groups are unsupervised high level (rather than granular) categories learned from the clients data at training time that can be used to index the data.
+            Expected input format is a single integer. 
           schema:
             type: integer 
         - name: filters 
           in: query
           required: false
+          description: >-
+            `filters` is a string of SQL conditionals that defines the boolean criteria for your query. 
+            The filters clause supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
+            The filters can operate on any metadata you have uploaded and on any prediction values tied to your data.
+            Example filter -- `published > "2024-01-01" AND pred_sale > .8`
           schema:
             type: string
         - name: sort_by 
           in: query
           required: false
+          description: >-
+            Define a field by which to sort. By default, the docs will be sorted by `relevance`.
+            The client can choose to sort by any value present in its metadata.
           schema:
             type: string
         - name: ascending 
@@ -249,6 +261,8 @@ paths:
         - name: summarize_by 
           in: query
           required: false
+          description: >-
+            Define summarization depth. Options include `sentence,paragraph,doc`. Defaults to `paragraph`.
           schema:
             type: string
         - name: limit
@@ -290,6 +304,12 @@ paths:
                     executive_paragraph_summary: This is a one paragraph .... summary of the topic that exists in the returned documents.
                     topic_group_id: 3
                     topic_group_short_title: Short Group Title
+                - topic_groups:
+                    topic_group_id: 3
+                    topic_group_short_title: Short Group Title
+                    prevelance: 0.31
+                    one_sentence_summary: This is a one sentence summary of a topic group that exists in the returned documents
+                    executive_paragraph_summary: This is a one paragraph .... summary of the topic group that exists in the returned documents.
         '401':
           description: Unauthorized
           content:
