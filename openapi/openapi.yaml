@@ -95,12 +95,6 @@ paths:
           description: API Key.
           schema:
             type: string
-        - name: index_id 
-          in: query
-          required: true
-          description: Index Id.
-          schema:
-            type: string
       responses:
         '200':
           description: A dictionary of index metadata
@@ -434,6 +428,67 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/trainIndexParameters'
+  /text/v1/index/{index_id}/topic/diff:
+    get:
+      summary: Get Topic Diff
+      tags:
+        - text
+      description: >-
+        Returns most conditionally prevalent topics information.
+      operationId: getTopicDiff 
+      parameters:
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+        - name: api_key
+          in: query
+          required: true
+          description: API Key.
+          schema:
+            type: string
+        - name: q1 
+          in: query
+          required: true
+          description: >-
+            `q1` is a string of SQL conditionals that defines the boolean criteria for your query. This query should denote the subset of data for which you are interested obtaining a high level summary.
+
+
+            The sql clause supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
+            The sql clause can operate on any metadata you have uploaded and on any prediction values tied to your data.
+            Example q1 filter -- `published > "2024-01-01" AND pred_sale > .8`
+          schema:
+            type: string
+        - name: q2
+          in: query
+          required: true
+          description: >-
+            `q2` is a string of SQL conditionals that defines the boolean criteria for your query. This query should denote the set of data against which you want to compare your `q1` filter. This field is optional and by default `q1` is compared against the entire corpus.  
+
+            The sql clause supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
+            The sql clause can operate on any metadata you have uploaded and on any prediction values tied to your data.
+            Example q1 filter -- `published > "2024-01-01" AND pred_sale > .8`
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A dictionary containing a list of sorted topic diffs. 
+          content:
+            application/json:
+              example:
+                index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
+                name: Index_Name_1 
+                state: untrained 
+              schema:
+                $ref: '#/components/schemas/TopicDiffInfo'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
 
 servers:
   - url: https://lit.review/api
@@ -521,6 +576,31 @@ components:
               type: number 
             another_field_you_choose_for_predictions:
               type: number
+    TopicDiffInfo:
+      description: Example of doc upload schema 
+      type: object
+      properties:
+        topics:
+          type: object
+          properties:
+            topic_id:
+              type: integer
+            short_title:
+              type: string
+            one_sentence_summary:
+              type: string
+            executive_paragraph_summary:
+              type: string
+            prevalence_ratio:
+              type: number 
+            prevalence:
+              type:  number
+            confidence:
+              type: integer
+            topic_group_id:
+              type: integer
+            topic_group_short_title:
+              type: string
     DocUploadInfo:
       description: Example of doc upload schema 
       type: object
