@@ -134,6 +134,9 @@ paths:
 
         The api support a batch size of up to 250 docs at a time. The large the batch size, the more efficient the upload.
 
+        This is a locking operation. A client cannot call upload, train or commit while an upload is already in progress.
+
+
 
         ### Nota Bene
         
@@ -473,6 +476,10 @@ components:
         api_key:
           type: string
         save:
+          description: >-
+            If `true` (default), save the docs to the staging index. 
+              If `false`, drop the docs after processing. This is useful for obtaining prediction results without locking or changing the index.
+
           type: boolean
         docs:
           type: array
