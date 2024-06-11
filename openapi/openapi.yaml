@@ -15,7 +15,8 @@ paths:
         This endpoint allows the client to create a new index.
 
         "Indexes" are all the core building block for storing, indexing and
-        querying data.
+        querying data. If an index with the provided name already exists,
+        no index will be created and the metadata of that index will be returned .
       operationId: createIndex 
       parameters: []
       responses:
@@ -27,6 +28,7 @@ paths:
                 index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
                 name: Index Name 
                 state: untrained 
+                already_exists: false
               schema:
                 $ref: '#/components/schemas/IndexInfo'
         '401':
@@ -45,7 +47,7 @@ paths:
       summary: List Indices
       tags:
         - text
-      description: Returns a list of all created indices tied to your api key.
+      description: Returns a list of all indices tied to your api key.
       operationId: listIndicies 
       parameters:
         - name: api_key
@@ -63,6 +65,7 @@ paths:
                 - index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
                   name: Index_Name_1 
                   state: untrained 
+                  already_exists: false
               schema:
                 items:
                   $ref: '#/components/schemas/IndexInfo'
@@ -418,6 +421,8 @@ components:
           type: string
         name:
           type: string
+        already_exists:
+          type: boolean
     trainIndexParameters:
       description: Available parameters to train an index 
       type: object
