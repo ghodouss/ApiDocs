@@ -126,7 +126,19 @@ paths:
       tags:
         - text 
       description: >-
-        TODO
+        Allows you to upload documents to an index. The docs are expected to be provided as a list of dictionaries. The contents of the document are expected to be under the key `doc`. You can provide a unique document identifier under the field `doc_id`. If no `doc_id` is provided, we will create an identifier by hashing the contents of the document.
+
+
+        Any additional fields document dictionary will be stored as metadata and be available for downstream querying. These fields will also be available as training targets for classification or regression tasks.
+
+
+        The api support a batch size of up to 250 docs at a time. The large the batch size, the more efficient the upload.
+
+
+        ### Nota Bene
+        
+        All uploaded will be saved in a `staging` index. No changes will go into effect until a `commit` request is sent.
+
       operationId: writeDocs 
       parameters: 
         - name: index_id
