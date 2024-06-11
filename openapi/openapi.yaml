@@ -182,7 +182,19 @@ paths:
       summary: Query Docs 
       tags:
         - text
-      description: Returns a list of all created indices tied to your api key.
+      description: >-
+        Interface to query your index. The api a dictionary containing three different entities.
+
+        1. A ranked list of document objects. By default these are sorted by relevance but you can also sort by any metadata fied as well.
+        Each doc contains a the text excerpt that best matches your query, all prediction values associated with the doc, all metadata
+        fields associated with the doc, and a ordered list of the topics associated with each doc.
+
+        2. A ranked list of topic objects. These are sorted by prevalance. These provide a high level overview of the data the client is querying. 
+        Each topic has a `topic_id` that can be used for additional downstream queries.
+
+        3. A ranked list of topic group objects. These are sorted by prevalance. These provide an even more high level overview of the data the client is querying. 
+        Each topic group has a `topic_group_id` that can be used for additional downstream queries.
+
       operationId: getDocs 
       parameters:
         - name: index_id
@@ -193,17 +205,25 @@ paths:
         - name: api_key
           in: query
           required: true
-          description: API Key.
+          description: Api Key
           schema:
             type: string
         - name: query 
           in: query
           required: false
+          description: >-
+            A search query that can be used to filter or sort document objects. 
+            By default the search will support a fuzzy match. Any word wrapped in double quotes \"word\" 
+            will be treated as an exact match filter.
           schema:
             type: string
         - name: topic_ids 
           in: query
           required: false
+          description: >-
+            Supports filtering on a single or multiple topics. 
+            Topics are unsupervised high level categories learned from the clients data at training time that can be used to index the data.
+            Expected input format is a commma seperated list of topic_ids eg `1,12,25` 
           schema:
             type: string
         - name: topic_group_id 
