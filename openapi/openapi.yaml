@@ -193,9 +193,9 @@ paths:
 
         1. A ranked list of document objects.  This provides a direct list of documents matching the query.  By default these documents are sorted by relevance, but you may optionally specify any metadata field to sort by (see documentation for the `sort_by` parameter).  Each result contains a short excerpt from the document that evinces your query; see documentation for the `summarize_by` parameter for information about this excerpt.  Each result also contains all prediction values associated with the document, all metadata fields associated with the document, and an ordered list of the topics associated with the document.
 
-        2. A ranked list of topic objects.  This thematic information is abstracted from the documents in the index, but still provides a granular summary of the content present in the data which matches the query.  These topic objects are sorted by prevalance (i.e., % occurrence), not relevance (i.e., degree of match to the query).  Each topic has a `topic_id` that can be used for additional downstream queries (see documentation for the `topic_ids` parameter).
+        2. A ranked list of topic objects.  This thematic information is abstracted from the documents in the index, but still provides a granular summary of the content present in the data which matches the query.  These topic objects are sorted by prevalence (i.e., % occurrence), not relevance (i.e., degree of match to the query).  Each topic has a `topic_id` that can be used for additional downstream queries (see documentation for the `topic_ids` parameter).
 
-        3. A ranked list of topic group objects.  This provides the highest-level overview of the content in the index which matches the query.  These are also sorted by prevalance.  Each topic group has a `topic_group_id` that can be used for additional downstream queries (see documentation for the `topic_group_id` parameter).
+        3. A ranked list of topic group objects.  This provides the highest-level overview of the content in the index which matches the query.  These are also sorted by prevalence.  Each topic group has a `topic_group_id` that can be used for additional downstream queries (see documentation for the `topic_group_id` parameter).
 
       operationId: getDocs 
       parameters:
@@ -225,7 +225,7 @@ paths:
           description: >-
             Supports filtering on a single or multiple topics. 
             Topics are unsupervised granular themes inferred from the clients data at training time that can be used to index the data.
-            Expected input format is a commma seperated list of topic_ids eg `1,12,25` 
+            Expected input format is a comma separated list of topic_ids eg `1,12,25` 
           schema:
             type: string
         - name: topic_group_id 
@@ -290,18 +290,18 @@ paths:
                     topics:
                       - topic_id: 32
                         short_title: example topic descriptor
-                        prevelance: 0.84
+                        prevalence: 0.84
                         topic_group_id: 3
                         topic_group_short_title: Short Group Title
                       - topic_id: 68
                         short_title: example topic descriptor2
-                        prevelance: 0.05
+                        prevalence: 0.05
                         topic_group_id: 5
                         topic_group_short_title: Short Group Title
                 - topics:
                   - topic_id: 12
                     short_title: example topic descriptor_1
-                    prevelance: 0.31
+                    prevalence: 0.31
                     one_sentence_summary: This is a one sentence summary of a topic that exists in the returned documents
                     executive_paragraph_summary: This is a one paragraph .... summary of the topic that exists in the returned documents.
                     topic_group_id: 3
@@ -309,7 +309,7 @@ paths:
                 - topic_groups:
                     topic_group_id: 3
                     topic_group_short_title: Short Group Title
-                    prevelance: 0.31
+                    prevalence: 0.31
                     one_sentence_summary: This is a one sentence summary of a topic group that exists in the returned documents
                     executive_paragraph_summary: This is a one paragraph .... summary of the topic group that exists in the returned documents.
         '401':
@@ -470,8 +470,8 @@ paths:
             `q1` is a string of SQL conditionals that defines the boolean criteria for your query. This query should denote the subset of data for which you are interested obtaining a high level summary.
 
 
-            The sql clause supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
-            The sql clause can operate on any metadata you have uploaded and on any prediction values tied to your data.
+            The SQL clause supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
+            The SQL clause can operate on any metadata you have uploaded and on any prediction values tied to your data.
             Example q1 filter -- `published > "2024-01-01" AND pred_sale > .8`
           schema:
             type: string
@@ -481,8 +481,8 @@ paths:
           description: >-
             `q2` is a string of SQL conditionals that defines the boolean criteria for your query. This query should denote the set of data against which you want to compare your `q1` filter. This field is optional and by default `q1` is compared against the entire corpus.  
 
-            The sql clause supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
-            The sql clause can operate on any metadata you have uploaded and on any prediction values tied to your data.
+            The SQL clause supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
+            The SQL clause can operate on any metadata you have uploaded and on any prediction values tied to your data.
             Example q1 filter -- `published > "2024-01-01" AND pred_sale > .8`
           schema:
             type: string
