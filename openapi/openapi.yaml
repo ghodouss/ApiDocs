@@ -402,9 +402,17 @@ paths:
       tags:
         - api/text/v1 
       description: >-
-        This endpoint trains on all docs that live in the production index.
-        Once an index has been trained, the docs are queryable and the model
-        is able to automatically index all new uploaded docs and (if relevant) run predictions.
+        Trains an AI model on all documents in the production index.  Once an index has been trained, documents are queryable (see documentation for the `query` endpoint), and the model automatically processes subsequently uploaded documents (see documentation for the `upload` endpoint).
+
+
+        The AI model identifies thematic information in documents, permitting semantic indexing and semantic search.  It also enables quantitative analysis of, e.g., topic trends.
+
+
+        The AI model may optionally be supervised using metadata present in the index.  Thematic decomposition of the data is not unique; supervision guides the model and aligns the identified topics to your intended application.  Supervision also allows the model to make predictions.
+
+
+        Data for supervision may be supplied explicitly using the `label_field_names` parameter.  Metadata field names listed in this parameter must each store data in a ternary true/false/unknown format.  For convenience, supervision data may also be supplied in a sparse "tag" format using the `tag_field_names` parameter.  Metadata field names listed in this parameter must contain a list of labels for each document.  The document is considered "true" for each label listed; it is implicitly considered "false" for each label not listed.  Consequently, the "tag" format does not allow for unknown labels.  Any combination of `label_field_names` and `tag_field_names` may be supplied.
+
       operationId: trainIndex 
       parameters: 
         - name: index_id
