@@ -10,7 +10,7 @@ paths:
     post:
       summary: Create Index 
       tags:
-        - text 
+        - api/text/v1 
       description: >-
         Creates a new index.
 
@@ -46,7 +46,7 @@ paths:
     get:
       summary: List Indices
       tags:
-        - text
+        - api/text/v1
       description: Returns a list of all indices tied to your API key.
       operationId: listIndicies 
       parameters:
@@ -81,7 +81,7 @@ paths:
     get:
       summary: Single Index Info
       tags:
-        - text
+        - api/text/v1
       description: Returns all metadata belonging to the specified index.
       operationId: getSingleIndexInfo 
       parameters:
@@ -119,15 +119,19 @@ paths:
     post:
       summary: Upload Docs 
       tags:
-        - text 
+        - api/text/v1 
       description: >-
         Uploads documents to an index for processing and/or storage.  Documents are processed by the AI model if the index has been trained (see the `train` endpoint), and are stored if the parameter `save=true`.
 
-        Documents are provided as a list of dictionaries.  The content of each document must be plain text and is provided under the required field `doc`.  You may provide a unique document identifier under the optional field `doc_id`.  If no `doc_id` is provided, we will create an identifier by hashing the contents of the document.  *TODO*: do docs with duplicate content and null doc_ids result in a conflict?
+
+        Documents are provided as a list of dictionaries.  The content of each document must be plain text and is provided under the required field `doc`.  You may provide a unique document identifier under the optional field `doc_id`.  If no `doc_id` is provided, we will create an identifier by hashing the contents of the document.  Documents can be updated via an upsert mechanism that matches on `doc_id`. Nota Bena- If `doc_id` is not provided and two docs have identical content, the most recently uploaded document will upsert the previousy uploaded document.
+
 
         Any additional fields in the document dictionary are stored within the index as metadata and will become available for training and querying tasks (see the `train` and `query` endpints, below).  While arbitrary metadata may be included and later queried, "binary" and "tag" data are required for supervised training of an index (no metadata is required for unsupervised training).  See the documentation for `label_field_names` and `tag_field_names` in the `train` endpoint for more information about the required formats.
 
+
         If the index has been trained, the response contains `predictions` for each doc produced by the trained AI model.  In order to obtain predictions without locking or mutating the index, set `save=false`.
+
 
         This is a locking operation.  A client cannot call upload, train or commit while an upload is already in progress.  Consequently, the operation is more efficient with batches of documents.  The API supports a batch size of up to 250 documents at a time.  The larger the batch size, the more efficient the upload.
 
@@ -174,13 +178,13 @@ paths:
     get:
       summary: Query Docs 
       tags:
-        - text
+        - api/text/v1
       description: >-
         Queries the specified index.  Queries are flexible, and may contain any combination of:
 
         1. SQL conditionals applied to metadata stored in the index.  See documentation for the `filters` parameter.  Note that this option requires metadata to be stored in the index; see documentation for the `upload` endpoint.
 
-        2. Thematic grouping as identified by the trained AI model.  You may filter by either a single topic group (`topic_group_id`) or by an arbitrary list of specific topics (`topic_ids`).  Note that these options require the index to have been trained.  *TODO*: these options are exclusive, I assume?
+        2. Thematic grouping as identified by the trained AI model.  You may filter by either a single topic group (`topic_group_id`) or by an arbitrary list of specific topics (`topic_ids`).  Note that these options require the index to have been trained. You may filter by either `topic_ids` or by `topic_group_id` but not both simultaneously.
 
         3. Search.  The query may include a search term to filter documents.  The search is semantic, based on inferred thematic content, but terms enclosed in double quotes will impose an exact match filter.
 
@@ -320,7 +324,7 @@ paths:
     post:
       summary: Commit Docs 
       tags:
-        - text 
+        - api/text/v1 
       description: >-
         Permanently applies all changes made to the staging index to the production index.  Note that `upload` saves new documents only to the staging index; a `commit` is necessary to use those documents for querying or for training.  This is a locking operation: no data can be uploaded, trained, or committed while a commit is in progress.
       operationId: commitDocs 
@@ -358,7 +362,7 @@ paths:
     post:
       summary: Unstage Docs 
       tags:
-        - text 
+        - api/text/v1 
       description: >-
         Reverts all changes to the staging index back, and resets the staging index to match the state of the production index.
       operationId: unstageDocs 
@@ -396,7 +400,7 @@ paths:
     post:
       summary: Train an Index 
       tags:
-        - text 
+        - api/text/v1 
       description: >-
         This endpoint trains on all docs that live in the production index.
         Once an index has been trained, the docs are queryable and the model
@@ -435,7 +439,7 @@ paths:
     get:
       summary: Get Topic Diff
       tags:
-        - text
+        - api/text/v1
       description: >-
         Returns most conditionally prevalent topics information.
       operationId: getTopicDiff 
