@@ -10,13 +10,13 @@ paths:
     post:
       summary: Create Index 
       tags:
-        - text 
+        - api/text/v1 
       description: >-
-        This endpoint allows the client to create a new index.
+        Creates a new index.
 
-        "Indexes" are all the core building block for storing, indexing and
-        querying data. If an index with the provided name already exists,
-        no index will be created and the metadata of that index will be returned .
+        An index is the core data structure for storing data.  Once the index is trained (see `train` below), an index may also be used to search, query, and analyze data.
+
+        If an index with the provided name already exists, no index will be created and the metadata of that index will be returned.
       operationId: createIndex 
       parameters: []
       responses:
@@ -46,8 +46,8 @@ paths:
     get:
       summary: List Indices
       tags:
-        - text
-      description: Returns a list of all indices tied to your api key.
+        - api/text/v1
+      description: Returns a list of all indices tied to your API key.
       operationId: listIndicies 
       parameters:
         - name: api_key
@@ -76,12 +76,13 @@ paths:
               example:
                 error: unauthorized
                 status: 401
+                
   /text/v1/index/{index_id}:
     get:
       summary: Single Index Info
       tags:
-        - text
-      description: Returns metadata of a specified index.
+        - api/text/v1
+      description: Returns all metadata belonging to the specified index.
       operationId: getSingleIndexInfo 
       parameters:
         - name: index_id
@@ -118,23 +119,25 @@ paths:
     post:
       summary: Upload Docs 
       tags:
-        - text 
+        - api/text/v1 
       description: >-
-        Allows you to upload documents to an index. The docs are expected to be provided as a list of dictionaries. The contents of the document are expected to be under the key `doc`. You can provide a unique document identifier under the field `doc_id`. If no `doc_id` is provided, we will create an identifier by hashing the contents of the document.
+        Uploads documents to an index for processing and/or storage.  Documents are processed by the AI model if the index has been trained (see the `train` endpoint), and are stored if the parameter `save=true`.
 
 
-        Any additional fields document dictionary will be stored as metadata and be available for downstream querying. These fields will also be available as training targets for classification or regression tasks.
+        Documents are provided as a list of dictionaries.  The content of each document must be plain text and is provided under the required field `doc`.  You may provide a unique document identifier under the optional field `doc_id`.  If no `doc_id` is provided, we will create an identifier by hashing the contents of the document.  Documents can be updated via an upsert mechanism that matches on `doc_id`. Nota Bena- If `doc_id` is not provided and two docs have identical content, the most recently uploaded document will upsert the previousy uploaded document.
 
 
-        The api support a batch size of up to 250 docs at a time. The large the batch size, the more efficient the upload.
-
-        This is a locking operation. A client cannot call upload, train or commit while an upload is already in progress.
+        Any additional fields in the document dictionary are stored within the index as metadata and will become available for training and querying tasks (see the `train` and `query` endpints, below).  While arbitrary metadata may be included and later queried, "binary" and "tag" data are required for supervised training of an index (no metadata is required for unsupervised training).  See the documentation for `label_field_names` and `tag_field_names` in the `train` endpoint for more information about the required formats.
 
 
+        If the index has been trained, the response contains `predictions` for each doc produced by the trained AI model.  In order to obtain predictions without locking or mutating the index, set `save=false`.
+
+
+        This is a locking operation.  A client cannot call upload, train or commit while an upload is already in progress.  Consequently, the operation is more efficient with batches of documents.  The API supports a batch size of up to 250 documents at a time.  The larger the batch size, the more efficient the upload.
 
         ### Nota Bene
         
-        All uploaded will be saved in a `staging` index. No changes will go into effect until a `commit` request is sent.
+        Uploaded documents are saved in a `staging` index.  The index is unaffected until a `commit` request is sent.
 
       operationId: writeDocs 
       parameters: 
@@ -175,19 +178,24 @@ paths:
     get:
       summary: Query Docs 
       tags:
-        - text
+        - api/text/v1
       description: >-
-        Interface to query your index. The api a dictionary containing three different entities.
+        Queries the specified index.  Queries are flexible, and may contain any combination of:
 
-        1. A ranked list of document objects. By default these are sorted by relevance but you can also sort by any metadata fied as well.
-        Each doc contains a the text excerpt that best matches your query, all prediction values associated with the doc, all metadata
-        fields associated with the doc, and a ordered list of the topics associated with each doc.
+        1. SQL conditionals applied to metadata stored in the index.  See documentation for the `filters` parameter.  Note that this option requires metadata to be stored in the index; see documentation for the `upload` endpoint.
 
-        2. A ranked list of topic objects. These are sorted by prevalance. These provide a granular overview of the data the client is querying. 
-        Each topic has a `topic_id` that can be used for additional downstream queries.
+        2. Thematic grouping as identified by the trained AI model.  You may filter by either a single topic group (`topic_group_id`) or by an arbitrary list of specific topics (`topic_ids`).  Note that these options require the index to have been trained. You may filter by either `topic_ids` or by `topic_group_id` but not both simultaneously.
 
-        3. A ranked list of topic group objects. These are sorted by prevalance. These provide a high level overview of the topics and data the client is querying. 
-        Each topic group has a `topic_group_id` that can be used for additional downstream queries.
+        3. Search.  The query may include a search term to filter documents.  The search is semantic, based on inferred thematic content, but terms enclosed in double quotes will impose an exact match filter.
+
+
+        The API returns a dictionary containing three different entries.  Each entry provides a distinct view into how the data in the index matches your query, with increasing degrees of abstraction:
+
+        1. A ranked list of document objects.  This provides a direct list of documents matching the query.  By default these documents are sorted by relevance, but you may optionally specify any metadata field to sort by (see documentation for the `sort_by` parameter).  Each result contains a short excerpt from the document that evinces your query; see documentation for the `summarize_by` parameter for information about this excerpt.  Each result also contains all prediction values associated with the document, all metadata fields associated with the document, and an ordered list of the topics associated with each document.
+
+        2. A ranked list of topic objects.  This thematic information is abstracted from the documents in the index, but still provides a granular summary of the content present in the data which matches the query.  These topic objects are sorted by prevalance (i.e., % occurrence), not relevance (i.e., degree of match to the query).  Each topic has a `topic_id` that can be used for additional downstream queries (see documentation for the `topic_ids` parameter).
+
+        3. A ranked list of topic group objects.  This provides the highest-level overview of the content in the index which matches the query.  These are also sorted by prevalance.  Each topic group has a `topic_group_id` that can be used for additional downstream queries (see documentation for the `topic_group_id` parameter).
 
       operationId: getDocs 
       parameters:
@@ -316,10 +324,9 @@ paths:
     post:
       summary: Commit Docs 
       tags:
-        - text 
+        - api/text/v1 
       description: >-
-        Applies the changes made to the staging index to the production index. 
-        This is a locking operation. No data can be uploaded, trained, or committed while a commit is in progress.
+        Permanently applies all changes made to the staging index to the production index.  Note that `upload` saves new documents only to the staging index; a `commit` is necessary to use those documents for querying or for training.  This is a locking operation: no data can be uploaded, trained, or committed while a commit is in progress.
       operationId: commitDocs 
       parameters: 
         - name: index_id
@@ -355,9 +362,9 @@ paths:
     post:
       summary: Unstage Docs 
       tags:
-        - text 
+        - api/text/v1 
       description: >-
-        Revert all existing changes to the staging index back to the state of the production index.
+        Reverts all changes to the staging index back, and resets the staging index to match the state of the production index.
       operationId: unstageDocs 
       parameters: 
         - name: index_id
@@ -393,7 +400,7 @@ paths:
     post:
       summary: Train an Index 
       tags:
-        - text 
+        - api/text/v1 
       description: >-
         This endpoint trains on all docs that live in the production index.
         Once an index has been trained, the docs are queryable and the model
@@ -432,7 +439,7 @@ paths:
     get:
       summary: Get Topic Diff
       tags:
-        - text
+        - api/text/v1
       description: >-
         Returns most conditionally prevalent topics information.
       operationId: getTopicDiff 
@@ -513,10 +520,10 @@ components:
 
         API requires a DEV API key.
         To obtain one, please follow these steps:
-          - email hello@lit.review requesting an api key
+          - email hello@lit.review requesting an API key
   schemas:
     ApiKeyOnly:
-      description: Api Key 
+      description: API Key 
       type: object
       properties:
         api_key:
@@ -627,7 +634,7 @@ components:
             properties:
               doc: 
                 type: string 
-                description: The core content you want indexed.
+                description: The document content (as plain text) that you want indexed.
               doc_id: 
                 type: string 
                 description: Will use if provided. Otherwise will be generated as a sha of the content. If you a doc_id already exists in the index, the conflicting fields will use the new doc information.
