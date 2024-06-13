@@ -14,7 +14,7 @@ paths:
       description: >-
         Creates a new index.
 
-        An index is the core data structure for storing data.  Once the index is trained (see `train` below), an index may also be used to search, query, and analyze data.
+        An index is the core data structure for storing data.  Once the index is trained (see documentation for the `train` endpoint), an index may also be used to search, query, and analyze data.
 
         If an index with the provided name already exists, no index will be created and the metadata of that index will be returned.
       operationId: createIndex 
@@ -121,16 +121,16 @@ paths:
       tags:
         - api/text/v1 
       description: >-
-        Uploads documents to an index for processing and/or storage.  Documents are processed by the AI model if the index has been trained (see the `train` endpoint), and are stored if the parameter `save=true`.
+        Uploads documents to a temporary staging index for processing and/or storage.  Documents are processed by the AI model if the index has been trained (see the `train` endpoint), and are stored if the parameter `save=true`.
 
 
-        Documents are provided as a list of dictionaries.  The content of each document must be plain text and is provided under the required field `doc`.  You may provide a unique document identifier under the optional field `doc_id`.  If no `doc_id` is provided, we will create an identifier by hashing the contents of the document.  Documents can be updated via an upsert mechanism that matches on `doc_id`. Nota Bena- If `doc_id` is not provided and two docs have identical content, the most recently uploaded document will upsert the previousy uploaded document.
+        Documents are provided as a list of dictionaries.  The content of each document must be plain text and is provided under the required field `doc`.  You may provide a unique document identifier under the optional field `doc_id`.  If no `doc_id` is provided, we will create an identifier by hashing the contents of the document.  Documents can be updated via an upsert mechanism that matches on `doc_id`.  If `doc_id` is not provided and two docs have identical content, the most recently uploaded document will upsert the previously uploaded document.
 
 
-        Any additional fields in the document dictionary are stored within the index as metadata and will become available for training and querying tasks (see the `train` and `query` endpints, below).  While arbitrary metadata may be included and later queried, "binary" and "tag" data are required for supervised training of an index (no metadata is required for unsupervised training).  See the documentation for `label_field_names` and `tag_field_names` in the `train` endpoint for more information about the required formats.
+        Any additional fields in the document dictionary are stored within the index as metadata and will become available for training and querying tasks (see documentation for the `train` and `query` endpoints).  While arbitrary metadata may be included and later queried, "binary" and "tag" data are required for supervised training of an index (no metadata is required for unsupervised training).  See the documentation for `label_field_names` and `tag_field_names` in the `train` endpoint for more information about the required formats.
 
 
-        If the index has been trained, the response contains `predictions` for each doc produced by the trained AI model.  In order to obtain predictions without locking or mutating the index, set `save=false`.
+        If the index has been trained, the response contains `predictions` produced by the trained AI model for each document.  In order to obtain predictions without locking or mutating the index, set `save=false`.
 
 
         This is a locking operation.  A client cannot call upload, train or commit while an upload is already in progress.  Consequently, the operation is more efficient with batches of documents.  The API supports a batch size of up to 250 documents at a time.  The larger the batch size, the more efficient the upload.
@@ -186,16 +186,16 @@ paths:
 
         2. Thematic grouping as identified by the trained AI model.  You may filter by either a single topic group (`topic_group_id`) or by an arbitrary list of specific topics (`topic_ids`).  Note that these options require the index to have been trained. You may filter by either `topic_ids` or by `topic_group_id` but not both simultaneously.
 
-        3. Search.  The query may include a search term to filter documents.  The search is semantic, based on inferred thematic content, but terms enclosed in double quotes will impose an exact match filter.
+        3. Search.  The query may include a search term to filter documents.  The search is semantic, based on inferred thematic content, but terms enclosed in double quotes will impose an exact match filter.  See documentation for the `query` parameter.
 
 
         The API returns a dictionary containing three different entries.  Each entry provides a distinct view into how the data in the index matches your query, with increasing degrees of abstraction:
 
-        1. A ranked list of document objects.  This provides a direct list of documents matching the query.  By default these documents are sorted by relevance, but you may optionally specify any metadata field to sort by (see documentation for the `sort_by` parameter).  Each result contains a short excerpt from the document that evinces your query; see documentation for the `summarize_by` parameter for information about this excerpt.  Each result also contains all prediction values associated with the document, all metadata fields associated with the document, and an ordered list of the topics associated with each document.
+        1. A ranked list of document objects.  This provides a direct list of documents matching the query.  By default these documents are sorted by relevance, but you may optionally specify any metadata field to sort by (see documentation for the `sort_by` parameter).  Each result contains a short excerpt from the document that evinces your query; see documentation for the `summarize_by` parameter for information about this excerpt.  Each result also contains all prediction values associated with the document, all metadata fields associated with the document, and an ordered list of the topics associated with the document.
 
-        2. A ranked list of topic objects.  This thematic information is abstracted from the documents in the index, but still provides a granular summary of the content present in the data which matches the query.  These topic objects are sorted by prevalance (i.e., % occurrence), not relevance (i.e., degree of match to the query).  Each topic has a `topic_id` that can be used for additional downstream queries (see documentation for the `topic_ids` parameter).
+        2. A ranked list of topic objects.  This thematic information is abstracted from the documents in the index, but still provides a granular summary of the content present in the data which matches the query.  These topic objects are sorted by prevalence (i.e., % occurrence), not relevance (i.e., degree of match to the query).  Each topic has a `topic_id` that can be used for additional downstream queries (see documentation for the `topic_ids` parameter).
 
-        3. A ranked list of topic group objects.  This provides the highest-level overview of the content in the index which matches the query.  These are also sorted by prevalance.  Each topic group has a `topic_group_id` that can be used for additional downstream queries (see documentation for the `topic_group_id` parameter).
+        3. A ranked list of topic group objects.  This provides the highest-level overview of the content in the index which matches the query.  These are also sorted by prevalence.  Each topic group has a `topic_group_id` that can be used for additional downstream queries (see documentation for the `topic_group_id` parameter).
 
       operationId: getDocs 
       parameters:
@@ -225,7 +225,7 @@ paths:
           description: >-
             Supports filtering on a single or multiple topics. 
             Topics are unsupervised granular themes inferred from the clients data at training time that can be used to index the data.
-            Expected input format is a commma seperated list of topic_ids eg `1,12,25` 
+            Expected input format is a comma separated list of topic_ids eg `1,12,25` 
           schema:
             type: string
         - name: topic_group_id 
@@ -272,6 +272,11 @@ paths:
           required: false
           schema:
             type: integer
+        - name: offset 
+          in: query
+          required: false
+          schema:
+            type: integer
       responses:
         '200':
           description: A list of document objects and a list of high level topics.
@@ -290,18 +295,18 @@ paths:
                     topics:
                       - topic_id: 32
                         short_title: example topic descriptor
-                        prevelance: 0.84
+                        prevalence: 0.84
                         topic_group_id: 3
                         topic_group_short_title: Short Group Title
                       - topic_id: 68
                         short_title: example topic descriptor2
-                        prevelance: 0.05
+                        prevalence: 0.05
                         topic_group_id: 5
                         topic_group_short_title: Short Group Title
                 - topics:
                   - topic_id: 12
                     short_title: example topic descriptor_1
-                    prevelance: 0.31
+                    prevalence: 0.31
                     one_sentence_summary: This is a one sentence summary of a topic that exists in the returned documents
                     executive_paragraph_summary: This is a one paragraph .... summary of the topic that exists in the returned documents.
                     topic_group_id: 3
@@ -309,7 +314,7 @@ paths:
                 - topic_groups:
                     topic_group_id: 3
                     topic_group_short_title: Short Group Title
-                    prevelance: 0.31
+                    prevalence: 0.31
                     one_sentence_summary: This is a one sentence summary of a topic group that exists in the returned documents
                     executive_paragraph_summary: This is a one paragraph .... summary of the topic group that exists in the returned documents.
         '401':
@@ -402,9 +407,17 @@ paths:
       tags:
         - api/text/v1 
       description: >-
-        This endpoint trains on all docs that live in the production index.
-        Once an index has been trained, the docs are queryable and the model
-        is able to automatically index all new uploaded docs and (if relevant) run predictions.
+        Trains an AI model on all documents in the production index.  Once an index has been trained, documents are queryable (see documentation for the `query` endpoint), and the model automatically processes subsequently uploaded documents (see documentation for the `upload` endpoint).
+
+
+        The AI model identifies thematic information in documents, permitting semantic indexing and semantic search.  It also enables quantitative analysis of, e.g., topic trends.
+
+
+        The AI model may optionally be supervised using metadata present in the index.  Thematic decomposition of the data is not unique; supervision guides the model and aligns the identified topics to your intended application.  Supervision also allows the model to make predictions.
+
+
+        Data for supervision may be supplied explicitly using the `label_field_names` parameter.  Metadata field names listed in this parameter must each store data in a ternary true/false/unknown format.  For convenience, supervision data may also be supplied in a sparse "tag" format using the `tag_field_names` parameter.  Metadata field names listed in this parameter must contain a list of labels for each document.  The document is considered "true" for each label listed; it is implicitly considered "false" for each label not listed.  Consequently, the "tag" format does not allow for unknown labels.  Any combination of `label_field_names` and `tag_field_names` may be supplied.
+
       operationId: trainIndex 
       parameters: 
         - name: index_id
@@ -462,8 +475,8 @@ paths:
             `q1` is a string of SQL conditionals that defines the boolean criteria for your query. This query should denote the subset of data for which you are interested obtaining a high level summary.
 
 
-            The sql clause supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
-            The sql clause can operate on any metadata you have uploaded and on any prediction values tied to your data.
+            The SQL clause supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
+            The SQL clause can operate on any metadata you have uploaded and on any prediction values tied to your data.
             Example q1 filter -- `published > "2024-01-01" AND pred_sale > .8`
           schema:
             type: string
@@ -473,8 +486,8 @@ paths:
           description: >-
             `q2` is a string of SQL conditionals that defines the boolean criteria for your query. This query should denote the set of data against which you want to compare your `q1` filter. This field is optional and by default `q1` is compared against the entire corpus.  
 
-            The sql clause supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
-            The sql clause can operate on any metadata you have uploaded and on any prediction values tied to your data.
+            The SQL clause supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
+            The SQL clause can operate on any metadata you have uploaded and on any prediction values tied to your data.
             Example q1 filter -- `published > "2024-01-01" AND pred_sale > .8`
           schema:
             type: string
