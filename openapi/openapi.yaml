@@ -425,6 +425,56 @@ paths:
                 error: unauthorized
                 status: 401
 
+  /text/v1/index/{index_id}/doc/meta:
+    get:
+      summary: Query Doc Meta 
+      tags:
+        - api/text/v1
+      description: >-
+        This api allows you to directly run arbitrary
+        SQL queries against you index's metadata. The availab
+        fields include `doc_id` as well as any metadata you uploaded
+        to your documents.
+      operationId: getDocMeta
+      parameters:
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+        - name: api_key
+          in: query
+          required: true
+          description: API Key.
+          schema:
+            type: string
+        - name: query
+          in: query
+          required: true
+          description: >-
+            `query` is a SQL query that defines the data you are interested in. 
+
+            The SQL query supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
+            Example query -- `SELECT doc_id WHERE published > "2024-01-01" AND pred_sale > .8`
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of dictionaries containing whatever fields you selected. 
+          content:
+            application/json:
+              example:
+                - doc_id: "document_identifier_1"
+                  pred_sale: .4
+                  date: "2024-01-01"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+
   /text/v1/index/{index_id}/doc/commit:
     post:
       summary: Commit Docs 
