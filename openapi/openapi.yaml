@@ -130,10 +130,12 @@ paths:
         Any additional fields in the document dictionary are stored within the index as metadata and will become available for training and querying tasks (see documentation for the `train` and `query` endpoints).  While arbitrary metadata may be included and later queried, "binary" and "tag" data are required for supervised training of an index (no metadata is required for unsupervised training).  See the documentation for `label_field_names` and `tag_field_names` in the `train` endpoint for more information about the required formats.
 
 
-        If the index has been trained, the response contains `predictions` produced by the trained AI model for each document.  In order to obtain predictions without locking or mutating the index, set `save=false`.
+        If the index has been trained, the response contains `predictions` produced by the trained AI model for each document.  In order to obtain predictions without locking or mutating the index, set `save=false`.  
+
+        If you wish to update an existing doc's metadata, you can do a `shallow update` by leaving the `doc` content field either empty or unchanged. The shallow update will the skip the model inference step and only update/append the metadata fields passed into the api. This provides a significant speedup to the api call.
 
 
-        This is a locking operation.  A client cannot call upload, train or commit while an upload is already in progress.  Consequently, the operation is more efficient with batches of documents.  The API supports a batch size of up to 250 documents at a time.  The larger the batch size, the more efficient the upload.
+        Uploading docs is a locking operation.  A client cannot call upload, train or commit while an upload is already in progress.  Consequently, the operation is more efficient with batches of documents.  The API supports a batch size of up to 250 documents at a time.  The larger the batch size, the more efficient the upload.
 
         ### Nota Bene
         
@@ -325,6 +327,104 @@ paths:
                 error: unauthorized
                 status: 401
 
+  /text/v1/index/{index_id}/doc/{doc_id}:
+    get:
+      summary: Query Docs by ID 
+      tags:
+        - api/text/v1
+      description: >-
+        Loads a specified set of docs from the index. Supports a comma separated list of up to 500 doc_ids at a time.
+
+        Additionally, the api provides the ability to specify the summary style of the docs by providing either a comma separated list of `topic_ids`, a `topic_group_id`, or a search `query`. The api will extract the most thematically relevant section of the doc to return. 
+
+        The API returns a dictionary containing field `docs` that contains a list of document objects in the order specified in the query.
+
+      operationId: loadDocs 
+      parameters:
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+        - name: doc_id
+          in: path
+          required: true
+          description: >-
+            A comma separated list of `doc_id`s. The api supports up to 500 per request.
+          schema:
+            type: string 
+        - name: api_key
+          in: query
+          required: true
+          description: Api Key
+          schema:
+            type: string
+        - name: query 
+          in: query
+          required: false
+          description: >-
+            A search query that can be used to summarize document objects. 
+          schema:
+            type: string
+        - name: topic_ids 
+          in: query
+          required: false
+          description: >-
+            Supports matching on a single or multiple topics for granular summaries
+            Topics are unsupervised granular themes inferred from the clients data at training time that can be used to index the data.
+            Expected input format is a comma separated list of topic_ids eg `1,12,25` 
+          schema:
+            type: string
+        - name: topic_group_id 
+          in: query
+          required: false
+          description: >-
+            Supports matching on a single topic group for high leve summaries.
+            Topic groups are unsupervised high level (rather than granular) categories learned from the clients data at training time that can be used to index the data.
+            Expected input format is a single integer. 
+          schema:
+            type: integer 
+        - name: summarize_by 
+          in: query
+          required: false
+          description: >-
+            Define summarization depth. Options include `sentence,paragraph,doc`. Defaults to `paragraph`.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of document objects and a list of high level topics.
+          content:
+            application/json:
+              example:
+                - docs:
+                  - doc_id: doc_id_1
+                    text: summarize text_1
+                    metadata:
+                      metadata_field_1 : "example meta info"
+                      another_meta_field: "more example meta info such as date, title, etc"
+                    predictions:
+                      prediction_field_1: 0.83
+                      another_prediction_field: 0.03
+                    topics:
+                      - topic_id: 32
+                        short_title: example topic descriptor
+                        prevalence: 0.84
+                        topic_group_id: 3
+                        topic_group_short_title: Short Group Title
+                      - topic_id: 68
+                        short_title: example topic descriptor2
+                        prevalence: 0.05
+                        topic_group_id: 5
+                        topic_group_short_title: Short Group Title
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+
   /text/v1/index/{index_id}/doc/commit:
     post:
       summary: Commit Docs 
@@ -403,7 +503,7 @@ paths:
 
   /text/v1/index/{index_id}/train:
     post:
-      summary: Train an Index 
+      summary: Train Index 
       tags:
         - api/text/v1 
       description: >-
@@ -450,7 +550,7 @@ paths:
               $ref: '#/components/schemas/trainIndexParameters'
   /text/v1/index/{index_id}/topic/diff:
     get:
-      summary: Get Topic Diff
+      summary: Topic Diff
       tags:
         - api/text/v1
       description: >-
@@ -518,7 +618,7 @@ paths:
                 status: 401
 
 servers:
-  - url: https://lit.review/api
+  - url: https://sturdystatistics.com/api
     description: Production server
 security:
   - api_key: []
