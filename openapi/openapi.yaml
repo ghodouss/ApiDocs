@@ -2,6 +2,9 @@ openapi: 3.0.3
 info:
   title: Sturdy Statistics API Documentation
   version: 1.0.0
+  license:
+    name: unlicensed
+    url: "www.sturdystatistics.com"
   description: |-
     Documentation for the suite Sturdy Statistics API solutions.
 
@@ -51,7 +54,7 @@ paths:
       operationId: listIndicies 
       parameters:
         - name: api_key
-          in: query
+          in: header 
           required: true
           description: API Key.
           schema:
@@ -135,7 +138,7 @@ paths:
         If you wish to update an existing doc's metadata, you can do a `shallow update` by leaving the `doc` content field either empty or unchanged. The shallow update will the skip the model inference step and only update/append the metadata fields passed into the api. This provides a significant speedup to the api call.
 
 
-        Uploading docs is a locking operation.  A client cannot call upload, train or commit while an upload is already in progress.  Consequently, the operation is more efficient with batches of documents.  The API supports a batch size of up to 250 documents at a time.  The larger the batch size, the more efficient the upload.
+        Uploading docs is a locking operation.  A client cannot call upload, train or commit while an upload is already in progress.  Consequently, the operation is more efficient with batches of documents.  The API supports a batch size of up to 1000 documents at a time.  The larger the batch size, the more efficient the upload.
 
         ### Nota Bene
         
@@ -156,12 +159,12 @@ paths:
               example:
                 - doc_id: "doc1"
                   predictions:
-                    field_you_choose_for_predictions_1: 0.84
-                    another_field_you_choose_for_predictions: 0.04
+                    prediction_class_1: 0.84
+                    prediction_class_2: 0.04
                 - doc_id: "doc2"
                   predictions:
-                    field_you_choose_for_predictions_1: 0.84
-                    another_field_you_choose_for_predictions: 0.04
+                    prediction_class_1: 0.84
+                    prediction_class_2: 0.04
               schema:
                 items:
                   $ref: '#/components/schemas/DocPredictions'
@@ -207,7 +210,7 @@ paths:
           schema:
             type: string 
         - name: api_key
-          in: query
+          in: header 
           required: true
           description: Api Key
           schema:
@@ -262,13 +265,13 @@ paths:
           required: false
           schema:
             type: boolean 
-        - name: summarize_by 
+        - name: context 
           in: query
           required: false
           description: >-
-            Define summarization depth. Options include `sentence,paragraph,doc`. Defaults to `paragraph`.
+            The number of paragraphs above and below the selected excerpt to return.
           schema:
-            type: string
+            type: integer
         - name: limit
           in: query
           required: false
@@ -305,20 +308,6 @@ paths:
                         prevalence: 0.05
                         topic_group_id: 5
                         topic_group_short_title: Short Group Title
-                - topics:
-                  - topic_id: 12
-                    short_title: example topic descriptor_1
-                    prevalence: 0.31
-                    one_sentence_summary: This is a one sentence summary of a topic that exists in the returned documents
-                    executive_paragraph_summary: This is a one paragraph .... summary of the topic that exists in the returned documents.
-                    topic_group_id: 3
-                    topic_group_short_title: Short Group Title
-                - topic_groups:
-                    topic_group_id: 3
-                    topic_group_short_title: Short Group Title
-                    prevalence: 0.31
-                    one_sentence_summary: This is a one sentence summary of a topic group that exists in the returned documents
-                    executive_paragraph_summary: This is a one paragraph .... summary of the topic group that exists in the returned documents.
         '401':
           description: Unauthorized
           content:
@@ -354,7 +343,7 @@ paths:
           schema:
             type: string 
         - name: api_key
-          in: query
+          in: header 
           required: true
           description: Api Key
           schema:
@@ -384,13 +373,13 @@ paths:
             Expected input format is a single integer. 
           schema:
             type: integer 
-        - name: summarize_by 
+        - name: context 
           in: query
           required: false
           description: >-
-            Define summarization depth. Options include `sentence,paragraph,doc`. Defaults to `paragraph`.
+            The number of paragraphs above and below the selected excerpt to return.
           schema:
-            type: string
+            type: integer
       responses:
         '200':
           description: A list of document objects and a list of high level topics.
@@ -406,17 +395,6 @@ paths:
                     predictions:
                       prediction_field_1: 0.83
                       another_prediction_field: 0.03
-                    topics:
-                      - topic_id: 32
-                        short_title: example topic descriptor
-                        prevalence: 0.84
-                        topic_group_id: 3
-                        topic_group_short_title: Short Group Title
-                      - topic_id: 68
-                        short_title: example topic descriptor2
-                        prevalence: 0.05
-                        topic_group_id: 5
-                        topic_group_short_title: Short Group Title
         '401':
           description: Unauthorized
           content:
@@ -443,7 +421,7 @@ paths:
           schema:
             type: string 
         - name: api_key
-          in: query
+          in: header 
           required: true
           description: API Key.
           schema:
@@ -452,10 +430,10 @@ paths:
           in: query
           required: true
           description: >-
-            `query` is a SQL query that defines the data you are interested in. 
+            `query` is a SQL query that defines the data you are interested in. The statment must query the `doc_meta` table for document level information or the `doc_meta_para` table for paragraph level information.
 
             The SQL query supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
-            Example query -- `SELECT doc_id WHERE published > "2024-01-01" AND pred_sale > .8`
+            Example query -- `SELECT doc_id FROM doc_meta WHERE published > "2024-01-01" AND pred_sale > .8`
           schema:
             type: string
       responses:
@@ -464,7 +442,7 @@ paths:
           content:
             application/json:
               example:
-                - doc_id: "document_identifier_1"
+                - doc_id: "uuid4"
                   pred_sale: .4
                   date: "2024-01-01"
         '401':
@@ -551,6 +529,83 @@ paths:
             schema:
                 $ref: '#/components/schemas/ApiKeyOnly'
 
+  /text/v1/index/{index_id}/clone:
+    post:
+      summary: Clone Index 
+      tags:
+        - api/text/v1 
+      description: >-
+        Create a deep copy of the selected index.
+      operationId: cloneIndex 
+      parameters: 
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+      responses:
+        '200':
+          description: New Index Information
+          content:
+            application/json:
+              example:
+                index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
+                name: Index Name 
+                state: ready 
+              schema:
+                $ref: '#/components/schemas/IndexInfo'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                new_name:
+                  type: string
+
+  /text/v1/index/{index_id}/delete:
+    post:
+      summary: Delete Index 
+      tags:
+        - api/text/v1 
+      description: >-
+        Create a deep copy of the selected index.
+      operationId: deleteIndex 
+      parameters: 
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+      responses:
+        '200':
+          description: New Index Information
+          content:
+            application/json:
+              example:
+                index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
+                name: Index Name 
+                state: ready 
+              schema:
+                $ref: '#/components/schemas/IndexInfo'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+      requestBody:
+        content:
+          application/json: {}
+
   /text/v1/index/{index_id}/train:
     post:
       summary: Train Index 
@@ -581,9 +636,9 @@ paths:
           content:
             application/json:
               example:
-                index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
-                name: Index Name 
-                state: training 
+                  index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
+                  name: Index Name 
+                  state: training 
               schema:
                 $ref: '#/components/schemas/IndexInfo'
         '401':
@@ -613,7 +668,7 @@ paths:
           schema:
             type: string 
         - name: api_key
-          in: query
+          in: header 
           required: true
           description: API Key.
           schema:
@@ -632,7 +687,7 @@ paths:
             type: string
         - name: q2
           in: query
-          required: true
+          required: false 
           description: >-
             `q2` is a string of SQL conditionals that defines the boolean criteria for your query. This query should denote the set of data against which you want to compare your `q1` filter. This field is optional and by default `q1` is compared against the entire corpus.  
 
@@ -641,24 +696,42 @@ paths:
             Example q1 filter -- `published > "2024-01-01" AND pred_sale > .8`
           schema:
             type: string
+        - name: min_confidence
+          in: query
+          schema:
+            type: number
+          required: false
+          description: >-
+            Sets a minimum confidence threshold between 0-1 that a topic changed when comparing q1 to q2.
+            
       responses:
         '200':
           description: A dictionary containing a list of sorted topic diffs. 
           content:
             application/json:
               example:
-                - topics:
-                  topic_id: 12
-                  short_title: "Topic Title"
-                  one_sentence_summary: "One sentence summary of the topic"
-                  executive_paragraph_summary: "Longer summary of a topic"
-                  prevalence_ratio: 8.3
-                  prevalence: .13
-                  confidence: .98
-                  topic_group_id: 2
-                  topic_group_short_title: "Group Title"
+                topics:
+                  - topic_id: 12
+                    short_title: "Topic Title"
+                    one_sentence_summary: "One sentence summary of the topic"
+                    executive_paragraph_summary: "Longer summary of a topic"
+                    prevalence_ratio: 8.3
+                    prevalence: .13
+                    confidence: 98
+                    topic_group_id: 2
+                    topic_group_short_title: "Group Title"
+                  - topic_id: 12
+                    short_title: "Topic Title"
+                    one_sentence_summary: "One sentence summary of the topic"
+                    executive_paragraph_summary: "Longer summary of a topic"
+                    prevalence_ratio: 8.3
+                    prevalence: .13
+                    confidence: 98
+                    topic_group_id: 2
+                    topic_group_short_title: "Group Title"
               schema:
-                $ref: '#/components/schemas/TopicDiffInfo'
+                items:
+                  $ref: '#/components/schemas/TopicDiffInfo'
         '401':
           description: Unauthorized
           content:
@@ -666,6 +739,84 @@ paths:
               example:
                 error: unauthorized
                 status: 401
+
+  /text/v1/index/{index_id}/topic/search:
+    get:
+      summary: Topic Search
+      tags:
+        - api/text/v1
+      description: >-
+        Returns most conditionally prevalent topics information.
+      operationId: getTopicSearch
+      parameters:
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+        - name: api_key
+          in: header 
+          required: true
+          description: API Key.
+          schema:
+            type: string
+        - name: query 
+          in: query
+          required: false
+          description: >-
+            A search query that can be used to summarize document objects. 
+          schema:
+            type: string
+        - name: filters 
+          in: query
+          required: false
+          description: >-
+            `filters` is a string of SQL conditionals that defines the boolean criteria for your query. 
+            The filters clause supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
+            The filters can operate on any metadata you have uploaded and on any prediction values tied to your data.
+            Example filter -- `published > "2024-01-01" AND pred_sale > .8`
+          schema:
+            type: string
+        - name: doc_id
+          in: query 
+          required: true
+          description: >-
+            A comma separated list of `doc_id`s. The api supports up to 500 per request.
+          schema:
+            type: string 
+            
+      responses:
+        '200':
+          description: A dictionary containing a list of sorted topic diffs. 
+          content:
+            application/json:
+              example:
+                topics:
+                  - topic_id: 12
+                    short_title: "Topic Title"
+                    one_sentence_summary: "One sentence summary of the topic"
+                    executive_paragraph_summary: "Longer summary of a topic"
+                    prevalence: .13
+                    topic_group_id: 2
+                    topic_group_short_title: "Group Title"
+                  - topic_id: 12
+                    short_title: "Topic Title"
+                    one_sentence_summary: "One sentence summary of the topic"
+                    executive_paragraph_summary: "Longer summary of a topic"
+                    prevalence: .13
+                    topic_group_id: 2
+                    topic_group_short_title: "Group Title"
+              schema:
+                items:
+                  $ref: '#/components/schemas/TopicSearchInfo'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+
 
 servers:
   - url: https://sturdystatistics.com/api
@@ -677,7 +828,7 @@ components:
     api_key:
       type: apiKey
       name: api_key
-      in: query
+      in: header
       description: >-
         API Key authentication.
 
@@ -695,8 +846,6 @@ components:
       description: Information Needed to create an index 
       type: object
       properties:
-        api_key:
-          type: string
         name:
           type: string
     IndexInfo:
@@ -715,8 +864,6 @@ components:
       description: Available parameters to train an index 
       type: object
       properties:
-        api_key:
-          type: string
         label_field_names:
           description: >-
             A list of fields that denote binary labels. The model
@@ -740,19 +887,25 @@ components:
           type: array
           items: 
             type: string
+        K:
+          description: >-
+            This parameter sets the maximum number of topics to learn from the data. We support a range of 32-512, with a default of 192. The runtime of training is linear with the number of topics. 
+          type: string 
     DocPredictions:
-      description: Return value of writing docs 
       type: object
       properties:
-        doc_id: 
-          type: string 
+        doc_id:
+          type: string
+          description: Unique identifier of the document.
         predictions:
           type: object
-          properties:
-            field_you_choose_for_predictions_1:
-              type: number 
-            another_field_you_choose_for_predictions:
-              type: number
+          description: Prediction scores for each class.
+          additionalProperties:
+            type: number
+            format: float
+          example:
+            prediction_class_1: 0.84
+            prediction_class_2: 0.04
     TopicDiffInfo:
       description: Example of doc upload schema 
       type: object
@@ -778,12 +931,31 @@ components:
               type: integer
             topic_group_short_title:
               type: string
+    TopicSearchInfo:
+      description: Example of doc upload schema 
+      type: object
+      properties:
+        topics:
+          type: object
+          properties:
+            topic_id:
+              type: integer
+            short_title:
+              type: string
+            one_sentence_summary:
+              type: string
+            executive_paragraph_summary:
+              type: string
+            prevalence:
+              type:  number
+            topic_group_id:
+              type: integer
+            topic_group_short_title:
+              type: string
     DocUploadInfo:
       description: Example of doc upload schema 
       type: object
       properties:
-        api_key:
-          type: string
         save:
           description: >-
             If `true` (default), save the docs to the staging index. 
