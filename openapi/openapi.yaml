@@ -2,15 +2,19 @@ openapi: 3.0.3
 info:
   title: Sturdy Statistics API Documentation
   version: 1.0.0
+  license:
+    name: unlicensed
+    url: "www.sturdystatistics.com"
   description: |-
     Documentation for the suite Sturdy Statistics API solutions.
 
 paths:
+
   /text/v1/index:
     post:
       summary: Create Index 
       tags:
-        - api/text/v1 
+        - api/text/v1/index
       description: >-
         Creates a new index.
 
@@ -46,12 +50,12 @@ paths:
     get:
       summary: List Indices
       tags:
-        - api/text/v1
+        - api/text/v1/index
       description: Returns a list of all indices tied to your API key.
       operationId: listIndicies 
       parameters:
         - name: api_key
-          in: query
+          in: header 
           required: true
           description: API Key.
           schema:
@@ -81,7 +85,7 @@ paths:
     get:
       summary: Single Index Info
       tags:
-        - api/text/v1
+        - api/text/v1/index
       description: Returns all metadata belonging to the specified index.
       operationId: getSingleIndexInfo 
       parameters:
@@ -119,7 +123,7 @@ paths:
     post:
       summary: Upload Docs 
       tags:
-        - api/text/v1 
+        - api/text/v1/index
       description: >-
         Uploads documents to a temporary staging index for processing and/or storage.  Documents are processed by the AI model if the index has been trained (see the `train` endpoint), and are stored if the parameter `save=true`.
 
@@ -130,10 +134,12 @@ paths:
         Any additional fields in the document dictionary are stored within the index as metadata and will become available for training and querying tasks (see documentation for the `train` and `query` endpoints).  While arbitrary metadata may be included and later queried, "binary" and "tag" data are required for supervised training of an index (no metadata is required for unsupervised training).  See the documentation for `label_field_names` and `tag_field_names` in the `train` endpoint for more information about the required formats.
 
 
-        If the index has been trained, the response contains `predictions` produced by the trained AI model for each document.  In order to obtain predictions without locking or mutating the index, set `save=false`.
+        If the index has been trained, the response contains `predictions` produced by the trained AI model for each document.  In order to obtain predictions without locking or mutating the index, set `save=false`.  
+
+        If you wish to update an existing doc's metadata, you can do a `shallow update` by leaving the `doc` content field either empty or unchanged. The shallow update will the skip the model inference step and only update/append the metadata fields passed into the api. This provides a significant speedup to the api call.
 
 
-        This is a locking operation.  A client cannot call upload, train or commit while an upload is already in progress.  Consequently, the operation is more efficient with batches of documents.  The API supports a batch size of up to 250 documents at a time.  The larger the batch size, the more efficient the upload.
+        Uploading docs is a locking operation.  A client cannot call upload, train or commit while an upload is already in progress.  Consequently, the operation is more efficient with batches of documents.  The API supports a batch size of up to 1000 documents at a time.  The larger the batch size, the more efficient the upload.
 
         ### Nota Bene
         
@@ -154,12 +160,12 @@ paths:
               example:
                 - doc_id: "doc1"
                   predictions:
-                    field_you_choose_for_predictions_1: 0.84
-                    another_field_you_choose_for_predictions: 0.04
+                    prediction_class_1: 0.84
+                    prediction_class_2: 0.04
                 - doc_id: "doc2"
                   predictions:
-                    field_you_choose_for_predictions_1: 0.84
-                    another_field_you_choose_for_predictions: 0.04
+                    prediction_class_1: 0.84
+                    prediction_class_2: 0.04
               schema:
                 items:
                   $ref: '#/components/schemas/DocPredictions'
@@ -178,7 +184,7 @@ paths:
     get:
       summary: Query Docs 
       tags:
-        - api/text/v1
+        - api/text/v1/index
       description: >-
         Queries the specified index.  Queries are flexible, and may contain any combination of:
 
@@ -205,7 +211,7 @@ paths:
           schema:
             type: string 
         - name: api_key
-          in: query
+          in: header 
           required: true
           description: Api Key
           schema:
@@ -260,13 +266,13 @@ paths:
           required: false
           schema:
             type: boolean 
-        - name: summarize_by 
+        - name: context 
           in: query
           required: false
           description: >-
-            Define summarization depth. Options include `sentence,paragraph,doc`. Defaults to `paragraph`.
+            The number of paragraphs above and below the selected excerpt to return.
           schema:
-            type: string
+            type: integer
         - name: limit
           in: query
           required: false
@@ -303,20 +309,143 @@ paths:
                         prevalence: 0.05
                         topic_group_id: 5
                         topic_group_short_title: Short Group Title
-                - topics:
-                  - topic_id: 12
-                    short_title: example topic descriptor_1
-                    prevalence: 0.31
-                    one_sentence_summary: This is a one sentence summary of a topic that exists in the returned documents
-                    executive_paragraph_summary: This is a one paragraph .... summary of the topic that exists in the returned documents.
-                    topic_group_id: 3
-                    topic_group_short_title: Short Group Title
-                - topic_groups:
-                    topic_group_id: 3
-                    topic_group_short_title: Short Group Title
-                    prevalence: 0.31
-                    one_sentence_summary: This is a one sentence summary of a topic group that exists in the returned documents
-                    executive_paragraph_summary: This is a one paragraph .... summary of the topic group that exists in the returned documents.
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+
+  /text/v1/index/{index_id}/doc/{doc_id}:
+    get:
+      summary: Query Docs by ID 
+      tags:
+        - api/text/v1/index
+      description: >-
+        Loads a specified set of docs from the index. Supports a comma separated list of up to 500 doc_ids at a time.
+
+        Additionally, the api provides the ability to specify the summary style of the docs by providing either a comma separated list of `topic_ids`, a `topic_group_id`, or a search `query`. The api will extract the most thematically relevant section of the doc to return. 
+
+        The API returns a dictionary containing field `docs` that contains a list of document objects in the order specified in the query.
+
+      operationId: loadDocs 
+      parameters:
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+        - name: doc_id
+          in: path
+          required: true
+          description: >-
+            A comma separated list of `doc_id`s. The api supports up to 500 per request.
+          schema:
+            type: string 
+        - name: api_key
+          in: header 
+          required: true
+          description: Api Key
+          schema:
+            type: string
+        - name: query 
+          in: query
+          required: false
+          description: >-
+            A search query that can be used to summarize document objects. 
+          schema:
+            type: string
+        - name: topic_ids 
+          in: query
+          required: false
+          description: >-
+            Supports matching on a single or multiple topics for granular summaries
+            Topics are unsupervised granular themes inferred from the clients data at training time that can be used to index the data.
+            Expected input format is a comma separated list of topic_ids eg `1,12,25` 
+          schema:
+            type: string
+        - name: topic_group_id 
+          in: query
+          required: false
+          description: >-
+            Supports matching on a single topic group for high leve summaries.
+            Topic groups are unsupervised high level (rather than granular) categories learned from the clients data at training time that can be used to index the data.
+            Expected input format is a single integer. 
+          schema:
+            type: integer 
+        - name: context 
+          in: query
+          required: false
+          description: >-
+            The number of paragraphs above and below the selected excerpt to return.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A list of document objects and a list of high level topics.
+          content:
+            application/json:
+              example:
+                - docs:
+                  - doc_id: doc_id_1
+                    text: summarize text_1
+                    metadata:
+                      metadata_field_1 : "example meta info"
+                      another_meta_field: "more example meta info such as date, title, etc"
+                    predictions:
+                      prediction_field_1: 0.83
+                      another_prediction_field: 0.03
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+
+  /text/v1/index/{index_id}/doc/meta:
+    get:
+      summary: Query Doc Meta 
+      tags:
+        - api/text/v1/index
+      description: >-
+        This api allows you to directly run arbitrary
+        SQL queries against you index's metadata. The availab
+        fields include `doc_id` as well as any metadata you uploaded
+        to your documents.
+      operationId: getDocMeta
+      parameters:
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+        - name: api_key
+          in: header 
+          required: true
+          description: API Key.
+          schema:
+            type: string
+        - name: query
+          in: query
+          required: true
+          description: >-
+            `query` is a SQL query that defines the data you are interested in. The statment must query the `doc_meta` table for document level information or the `doc_meta_para` table for paragraph level information.
+
+            The SQL query supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
+            Example query -- `SELECT doc_id FROM doc_meta WHERE published > "2024-01-01" AND pred_sale > .8`
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of dictionaries containing whatever fields you selected. 
+          content:
+            application/json:
+              example:
+                - doc_id: "uuid4"
+                  pred_sale: .4
+                  date: "2024-01-01"
         '401':
           description: Unauthorized
           content:
@@ -329,7 +458,7 @@ paths:
     post:
       summary: Commit Docs 
       tags:
-        - api/text/v1 
+        - api/text/v1/index
       description: >-
         Permanently applies all changes made to the staging index to the production index.  Note that `upload` saves new documents only to the staging index; a `commit` is necessary to use those documents for querying or for training.  This is a locking operation: no data can be uploaded, trained, or committed while a commit is in progress.
       operationId: commitDocs 
@@ -345,11 +474,9 @@ paths:
           content:
             application/json:
               example:
-                index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
-                name: Index Name 
-                state: ready 
+                job_id: a3cd8f52a42b4ee3841dacfe9408d4cd
               schema:
-                $ref: '#/components/schemas/IndexInfo'
+                $ref: '#/components/schemas/JobID'
         '401':
           description: Unauthorized
           content:
@@ -367,7 +494,7 @@ paths:
     post:
       summary: Unstage Docs 
       tags:
-        - api/text/v1 
+        - api/text/v1/index
       description: >-
         Reverts all changes to the staging index back, and resets the staging index to match the state of the production index.
       operationId: unstageDocs 
@@ -383,11 +510,9 @@ paths:
           content:
             application/json:
               example:
-                index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
-                name: Index Name 
-                state: ready 
+                job_id: a3cd8f52a42b4ee3841dacfe9408d4cd
               schema:
-                $ref: '#/components/schemas/IndexInfo'
+                $ref: '#/components/schemas/JobID'
         '401':
           description: Unauthorized
           content:
@@ -401,11 +526,84 @@ paths:
             schema:
                 $ref: '#/components/schemas/ApiKeyOnly'
 
+  /text/v1/index/{index_id}/clone:
+    post:
+      summary: Clone Index 
+      tags:
+        - api/text/v1/index
+      description: >-
+        Create a deep copy of the selected index.
+      operationId: cloneIndex 
+      parameters: 
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+      responses:
+        '200':
+          description: New Index Information
+          content:
+            application/json:
+              example:
+                job_id: a3cd8f52a42b4ee3841dacfe9408d4cd
+              schema:
+                $ref: '#/components/schemas/JobID'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                new_name:
+                  type: string
+
+  /text/v1/index/{index_id}/delete:
+    post:
+      summary: Delete Index 
+      tags:
+        - api/text/v1/index
+      description: >-
+        Create a deep copy of the selected index.
+      operationId: deleteIndex 
+      parameters: 
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+      responses:
+        '200':
+          description: New Index Information
+          content:
+            application/json:
+              example:
+                job_id: a3cd8f52a42b4ee3841dacfe9408d4cd
+              schema:
+                $ref: '#/components/schemas/JobID'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+      requestBody:
+        content:
+          application/json: {}
+
   /text/v1/index/{index_id}/train:
     post:
-      summary: Train an Index 
+      summary: Train Index 
       tags:
-        - api/text/v1 
+        - api/text/v1/index
       description: >-
         Trains an AI model on all documents in the production index.  Once an index has been trained, documents are queryable (see documentation for the `query` endpoint), and the model automatically processes subsequently uploaded documents (see documentation for the `upload` endpoint).
 
@@ -431,11 +629,9 @@ paths:
           content:
             application/json:
               example:
-                index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
-                name: Index Name 
-                state: training 
+                job_id: a3cd8f52a42b4ee3841dacfe9408d4cd
               schema:
-                $ref: '#/components/schemas/IndexInfo'
+                $ref: '#/components/schemas/JobID'
         '401':
           description: Unauthorized
           content:
@@ -450,9 +646,9 @@ paths:
               $ref: '#/components/schemas/trainIndexParameters'
   /text/v1/index/{index_id}/topic/diff:
     get:
-      summary: Get Topic Diff
+      summary: Topic Diff
       tags:
-        - api/text/v1
+        - api/text/v1/index
       description: >-
         Returns most conditionally prevalent topics information.
       operationId: getTopicDiff 
@@ -463,7 +659,7 @@ paths:
           schema:
             type: string 
         - name: api_key
-          in: query
+          in: header 
           required: true
           description: API Key.
           schema:
@@ -482,7 +678,7 @@ paths:
             type: string
         - name: q2
           in: query
-          required: true
+          required: false 
           description: >-
             `q2` is a string of SQL conditionals that defines the boolean criteria for your query. This query should denote the set of data against which you want to compare your `q1` filter. This field is optional and by default `q1` is compared against the entire corpus.  
 
@@ -491,24 +687,221 @@ paths:
             Example q1 filter -- `published > "2024-01-01" AND pred_sale > .8`
           schema:
             type: string
+        - name: min_confidence
+          in: query
+          schema:
+            type: number
+          required: false
+          description: >-
+            Sets a minimum confidence threshold between 0-1 that a topic changed when comparing q1 to q2.
+            
       responses:
         '200':
           description: A dictionary containing a list of sorted topic diffs. 
           content:
             application/json:
               example:
-                - topics:
-                  topic_id: 12
-                  short_title: "Topic Title"
-                  one_sentence_summary: "One sentence summary of the topic"
-                  executive_paragraph_summary: "Longer summary of a topic"
-                  prevalence_ratio: 8.3
-                  prevalence: .13
-                  confidence: .98
-                  topic_group_id: 2
-                  topic_group_short_title: "Group Title"
+                topics:
+                  - topic_id: 12
+                    short_title: "Topic Title"
+                    one_sentence_summary: "One sentence summary of the topic"
+                    executive_paragraph_summary: "Longer summary of a topic"
+                    prevalence_ratio: 8.3
+                    prevalence: .13
+                    confidence: 98
+                    topic_group_id: 2
+                    topic_group_short_title: "Group Title"
+                  - topic_id: 12
+                    short_title: "Topic Title"
+                    one_sentence_summary: "One sentence summary of the topic"
+                    executive_paragraph_summary: "Longer summary of a topic"
+                    prevalence_ratio: 8.3
+                    prevalence: .13
+                    confidence: 98
+                    topic_group_id: 2
+                    topic_group_short_title: "Group Title"
               schema:
-                $ref: '#/components/schemas/TopicDiffInfo'
+                items:
+                  $ref: '#/components/schemas/TopicDiffInfo'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+
+  /text/v1/index/{index_id}/topic/search:
+    get:
+      summary: Topic Search
+      tags:
+        - api/text/v1/index
+      description: >-
+        Returns most conditionally prevalent topics information.
+      operationId: getTopicSearch
+      parameters:
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+        - name: api_key
+          in: header 
+          required: true
+          description: API Key.
+          schema:
+            type: string
+        - name: query 
+          in: query
+          required: false
+          description: >-
+            A search query that can be used to summarize document objects. 
+          schema:
+            type: string
+        - name: filters 
+          in: query
+          required: false
+          description: >-
+            `filters` is a string of SQL conditionals that defines the boolean criteria for your query. 
+            The filters clause supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
+            The filters can operate on any metadata you have uploaded and on any prediction values tied to your data.
+            Example filter -- `published > "2024-01-01" AND pred_sale > .8`
+          schema:
+            type: string
+        - name: doc_id
+          in: query 
+          required: true
+          description: >-
+            A comma separated list of `doc_id`s. The api supports up to 500 per request.
+          schema:
+            type: string 
+            
+      responses:
+        '200':
+          description: A dictionary containing a list of sorted topic diffs. 
+          content:
+            application/json:
+              example:
+                topics:
+                  - topic_id: 12
+                    short_title: "Topic Title"
+                    one_sentence_summary: "One sentence summary of the topic"
+                    executive_paragraph_summary: "Longer summary of a topic"
+                    prevalence: .13
+                    topic_group_id: 2
+                    topic_group_short_title: "Group Title"
+                  - topic_id: 12
+                    short_title: "Topic Title"
+                    one_sentence_summary: "One sentence summary of the topic"
+                    executive_paragraph_summary: "Longer summary of a topic"
+                    prevalence: .13
+                    topic_group_id: 2
+                    topic_group_short_title: "Group Title"
+              schema:
+                items:
+                  $ref: '#/components/schemas/TopicSearchInfo'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+
+
+
+  /text/v1/job/{job_id}:
+    get:
+      summary: Job Info
+      tags:
+        - api/text/v1/job
+      description: Returns the status of the current job.
+      operationId: getJobStatus
+      parameters:
+        - name: job_id 
+          in: path
+          required: true
+          schema:
+            type: string 
+        - name: api_key
+          in: query
+          required: true
+          description: API Key.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A dictionary of job metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatus'
+              example:
+                finishedAt: '2024-11-05T01:41:47.637000+00:00'
+                index_id: 'index_05a7cb07da764f1aa399ce65ab06'
+                job_id: '7e5154f4-cfcd-4fc7-94c3-5a168f83'
+                job_name: 'commitIndexV2'
+                result:
+                  result: 'success'
+                startedAt: '2024-11-05T01:41:26.835000+00:00'
+                status: 'SUCCEEDED'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+
+  /text/v1/job:
+    get:
+      summary: List Jobs 
+      tags:
+        - api/text/v1/job
+      description: List all jobs matching the filter criteria 
+      operationId: listJobs 
+      parameters:
+        - name: api_key
+          in: query
+          required: true
+          description: API Key.
+          schema:
+            type: string
+        - name: index_id 
+          description: Filter on a specified index_id. 
+          in: query 
+          required: false 
+          schema:
+            type: string 
+        - name: status 
+          in: query 
+          required: false 
+          schema:
+            type: string 
+          description: Filter on job status of the job. One of 'PENDING', 'RUNNING', 'CANCELLED', 'SUCCEEDED', 'FAILED'.
+        - name: job_name 
+          in: query 
+          required: false 
+          schema:
+            type: string 
+          description: Filter on the name of the job.
+      responses:
+        '200':
+          description: A list of dictionaries of job metadata
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/JobStatus'
+              example:
+                - finishedAt: '2024-11-05T01:41:47.637000+00:00'
+                  index_id: 'index_05a7cb07da764f1aa399ce65ab06'
+                  job_id: '7e5154f4-cfcd-4fc7-94c3-5a168f83'
+                  job_name: 'commitIndexV2'
+                  result:
+                    result: 'success'
+                  startedAt: '2024-11-05T01:41:26.835000+00:00'
+                  status: 'SUCCEEDED'
         '401':
           description: Unauthorized
           content:
@@ -518,7 +911,7 @@ paths:
                 status: 401
 
 servers:
-  - url: https://lit.review/api
+  - url: https://sturdystatistics.com/api
     description: Production server
 security:
   - api_key: []
@@ -527,7 +920,7 @@ components:
     api_key:
       type: apiKey
       name: api_key
-      in: query
+      in: header
       description: >-
         API Key authentication.
 
@@ -545,8 +938,6 @@ components:
       description: Information Needed to create an index 
       type: object
       properties:
-        api_key:
-          type: string
         name:
           type: string
     IndexInfo:
@@ -565,8 +956,6 @@ components:
       description: Available parameters to train an index 
       type: object
       properties:
-        api_key:
-          type: string
         label_field_names:
           description: >-
             A list of fields that denote binary labels. The model
@@ -590,19 +979,25 @@ components:
           type: array
           items: 
             type: string
+        K:
+          description: >-
+            This parameter sets the maximum number of topics to learn from the data. We support a range of 32-512, with a default of 192. The runtime of training is linear with the number of topics. 
+          type: string 
     DocPredictions:
-      description: Return value of writing docs 
       type: object
       properties:
-        doc_id: 
-          type: string 
+        doc_id:
+          type: string
+          description: Unique identifier of the document.
         predictions:
           type: object
-          properties:
-            field_you_choose_for_predictions_1:
-              type: number 
-            another_field_you_choose_for_predictions:
-              type: number
+          description: Prediction scores for each class.
+          additionalProperties:
+            type: number
+            format: float
+          example:
+            prediction_class_1: 0.84
+            prediction_class_2: 0.04
     TopicDiffInfo:
       description: Example of doc upload schema 
       type: object
@@ -628,12 +1023,31 @@ components:
               type: integer
             topic_group_short_title:
               type: string
+    TopicSearchInfo:
+      description: Example of doc upload schema 
+      type: object
+      properties:
+        topics:
+          type: object
+          properties:
+            topic_id:
+              type: integer
+            short_title:
+              type: string
+            one_sentence_summary:
+              type: string
+            executive_paragraph_summary:
+              type: string
+            prevalence:
+              type:  number
+            topic_group_id:
+              type: integer
+            topic_group_short_title:
+              type: string
     DocUploadInfo:
       description: Example of doc upload schema 
       type: object
       properties:
-        api_key:
-          type: string
         save:
           description: >-
             If `true` (default), save the docs to the staging index. 
@@ -669,3 +1083,38 @@ components:
                 type: array
                 items: 
                   type: integer
+    JobID:
+      type: object
+      properties:
+        job_id:
+          type: string
+          description: Unique job identifier 
+    JobStatus:
+      type: object
+      properties:
+        result:
+          type: object
+          description: Output of the job (e.g., 'success' or 'failure'). Only available when job is in SUCCEEDED state.
+        status:
+          type: string
+          description: Current status of the job. One of 'PENDING', 'RUNNING', 'CANCELLED', 'SUCCEEDED', 'FAILED'.
+        job_id:
+          type: string
+          description: Unique identifier of the job.
+        job_name:
+          type: string
+          description: Name of the job.
+        index_id:
+          type: string
+          description: Identifier of the index associated with the job.
+        finishedAt:
+          type: string
+          format: date-time
+          description: Timestamp of when the job finished.
+        startedAt:
+          type: string
+          format: date-time
+          description: Timestamp of when the job started.
+        error:
+          type: string 
+          description: Error message if job fails.
