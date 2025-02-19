@@ -10,11 +10,11 @@ info:
 
 paths:
 
-  /text/v1/index:
+  /v1/text/index:
     post:
       summary: Create Index 
       tags:
-        - api/text/v1/index
+        - api/v1/text/index
       description: >-
         Creates a new index.
 
@@ -29,10 +29,14 @@ paths:
           content:
             application/json:
               example:
-                index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
-                name: Index Name 
-                state: untrained 
-                already_exists: false
+                id: "index_4c382ed967ca47dcbc0f0e3bb9b84dc8"
+                name: "demo-index"
+                organization_id: "a1865a85-5afc-42f9-9c5a-9e50dcffd961"
+                state: "untrained"
+                stored_bytes: 0
+                creation_timestamp: "Wed, 19 Feb 2025 09:36:03 GMT"
+                last_commit_timestamp: null
+                last_training_timestamp: null
               schema:
                 $ref: '#/components/schemas/IndexInfo'
         '401':
@@ -50,7 +54,7 @@ paths:
     get:
       summary: List Indices
       tags:
-        - api/text/v1/index
+        - api/v1/text/index
       description: Returns a list of all indices tied to your API key.
       operationId: listIndicies 
       parameters:
@@ -66,10 +70,14 @@ paths:
           content:
             application/json:
               example:
-                - index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
-                  name: Index_Name_1 
-                  state: untrained 
-                  already_exists: false
+                - id: "index_4c382ed967ca47dcbc0f0e3bb9b84dc8"
+                  name: "demo-index"
+                  organization_id: "a1865a85-5afc-42f9-9c5a-9e50dcffd961"
+                  state: "untrained"
+                  stored_bytes: 0
+                  creation_timestamp: "Wed, 19 Feb 2025 09:36:03 GMT"
+                  last_commit_timestamp: null
+                  last_training_timestamp: null
               schema:
                 items:
                   $ref: '#/components/schemas/IndexInfo'
@@ -81,11 +89,11 @@ paths:
                 error: unauthorized
                 status: 401
                 
-  /text/v1/index/{index_id}:
+  /v1/text/index/{index_id}:
     get:
       summary: Single Index Info
       tags:
-        - api/text/v1/index
+        - api/v1/text/index
       description: Returns all metadata belonging to the specified index.
       operationId: getSingleIndexInfo 
       parameters:
@@ -106,9 +114,14 @@ paths:
           content:
             application/json:
               example:
-                index_id: index_a3cd8f52a42b4ee3841dacfe9408d4cd
-                name: Index_Name_1 
-                state: untrained 
+                id: "index_4c382ed967ca47dcbc0f0e3bb9b84dc8"
+                name: "demo-index"
+                organization_id: "a1865a85-5afc-42f9-9c5a-9e50dcffd961"
+                state: "untrained"
+                stored_bytes: 0
+                creation_timestamp: "Wed, 19 Feb 2025 09:36:03 GMT"
+                last_commit_timestamp: null
+                last_training_timestamp: null
               schema:
                 $ref: '#/components/schemas/IndexInfo'
         '401':
@@ -119,11 +132,11 @@ paths:
                 error: unauthorized
                 status: 401
 
-  /text/v1/index/{index_id}/doc:
+  /v1/text/index/{index_id}/doc:
     post:
       summary: Upload Docs 
       tags:
-        - api/text/v1/index
+        - api/v1/text/index
       description: >-
         Uploads documents to a temporary staging index for processing and/or storage.  Documents are processed by the AI model if the index has been trained (see the `train` endpoint), and are stored if the parameter `save=true`.
 
@@ -184,7 +197,7 @@ paths:
     get:
       summary: Query Docs 
       tags:
-        - api/text/v1/index
+        - api/v1/text/index
       description: >-
         Queries the specified index.  Queries are flexible, and may contain any combination of:
 
@@ -317,11 +330,11 @@ paths:
                 error: unauthorized
                 status: 401
 
-  /text/v1/index/{index_id}/doc/{doc_id}:
+  /v1/text/index/{index_id}/doc/{doc_id}:
     get:
       summary: Query Docs by ID 
       tags:
-        - api/text/v1/index
+        - api/v1/text/index
       description: >-
         Loads a specified set of docs from the index. Supports a comma separated list of up to 500 doc_ids at a time.
 
@@ -404,11 +417,11 @@ paths:
                 error: unauthorized
                 status: 401
 
-  /text/v1/index/{index_id}/doc/meta:
+  /v1/text/index/{index_id}/doc/meta:
     get:
       summary: Query Doc Meta 
       tags:
-        - api/text/v1/index
+        - api/v1/text/index
       description: >-
         This api allows you to directly run arbitrary
         SQL queries against you index's metadata. The availab
@@ -454,11 +467,11 @@ paths:
                 error: unauthorized
                 status: 401
 
-  /text/v1/index/{index_id}/doc/commit:
+  /v1/text/index/{index_id}/doc/commit:
     post:
       summary: Commit Docs 
       tags:
-        - api/text/v1/index
+        - api/v1/text/index
       description: >-
         Permanently applies all changes made to the staging index to the production index.  Note that `upload` saves new documents only to the staging index; a `commit` is necessary to use those documents for querying or for training.  This is a locking operation: no data can be uploaded, trained, or committed while a commit is in progress.
       operationId: commitDocs 
@@ -490,11 +503,11 @@ paths:
             schema:
                 $ref: '#/components/schemas/ApiKeyOnly'
 
-  /text/v1/index/{index_id}/doc/unstage:
+  /v1/text/index/{index_id}/doc/unstage:
     post:
       summary: Unstage Docs 
       tags:
-        - api/text/v1/index
+        - api/v1/text/index
       description: >-
         Reverts all changes to the staging index back, and resets the staging index to match the state of the production index.
       operationId: unstageDocs 
@@ -526,11 +539,11 @@ paths:
             schema:
                 $ref: '#/components/schemas/ApiKeyOnly'
 
-  /text/v1/index/{index_id}/clone:
+  /v1/text/index/{index_id}/clone:
     post:
       summary: Clone Index 
       tags:
-        - api/text/v1/index
+        - api/v1/text/index
       description: >-
         Create a deep copy of the selected index.
       operationId: cloneIndex 
@@ -565,11 +578,11 @@ paths:
                 new_name:
                   type: string
 
-  /text/v1/index/{index_id}/delete:
+  /v1/text/index/{index_id}/delete:
     post:
       summary: Delete Index 
       tags:
-        - api/text/v1/index
+        - api/v1/text/index
       description: >-
         Create a deep copy of the selected index.
       operationId: deleteIndex 
@@ -599,11 +612,11 @@ paths:
         content:
           application/json: {}
 
-  /text/v1/index/{index_id}/train:
+  /v1/text/index/{index_id}/train:
     post:
       summary: Train Index 
       tags:
-        - api/text/v1/index
+        - api/v1/text/index
       description: >-
         Trains an AI model on all documents in the production index.  Once an index has been trained, documents are queryable (see documentation for the `query` endpoint), and the model automatically processes subsequently uploaded documents (see documentation for the `upload` endpoint).
 
@@ -644,11 +657,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/trainIndexParameters'
-  /text/v1/index/{index_id}/topic/diff:
+  /v1/text/index/{index_id}/topic/diff:
     get:
       summary: Topic Diff
       tags:
-        - api/text/v1/index
+        - api/v1/text/index
       description: >-
         Returns most conditionally prevalent topics information.
       operationId: getTopicDiff 
@@ -731,11 +744,11 @@ paths:
                 error: unauthorized
                 status: 401
 
-  /text/v1/index/{index_id}/topic/search:
+  /v1/text/index/{index_id}/topic/search:
     get:
       summary: Topic Search
       tags:
-        - api/text/v1/index
+        - api/v1/text/index
       description: >-
         Returns most conditionally prevalent topics information.
       operationId: getTopicSearch
@@ -810,11 +823,11 @@ paths:
 
 
 
-  /text/v1/job/{job_id}:
+  /v1/job/{job_id}:
     get:
       summary: Job Info
       tags:
-        - api/text/v1/job
+        - api/v1/job
       description: Returns the status of the current job.
       operationId: getJobStatus
       parameters:
@@ -853,11 +866,11 @@ paths:
                 error: unauthorized
                 status: 401
 
-  /text/v1/job:
+  /v1/job:
     get:
       summary: List Jobs 
       tags:
-        - api/text/v1/job
+        - api/v1/job
       description: List all jobs matching the filter criteria 
       operationId: listJobs 
       parameters:
@@ -944,14 +957,27 @@ components:
       description: Index Information 
       type: object
       properties:
-        index_id:
-          type: string
-        state:
+        id:
           type: string
         name:
           type: string
-        already_exists:
-          type: boolean
+        organization_id:
+          type: string
+        state:
+          type: string
+        stored_bytes:
+          type: integer
+        creation_timestamp:
+          type: string
+          format: date-time
+        last_commit_timestamp:
+          type: string
+          format: date-time
+          nullable: true
+        last_training_timestamp:
+          type: string
+          format: date-time
+          nullable: true
     trainIndexParameters:
       description: Available parameters to train an index 
       type: object
