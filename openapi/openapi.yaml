@@ -677,36 +677,72 @@ paths:
           description: API Key.
           schema:
             type: string
-        - name: q1 
+        - name: filter1
           in: query
           required: true
           description: >-
-            `q1` is a string of SQL conditionals that defines the boolean criteria for your query. This query should denote the subset of data for which you are interested obtaining a high level summary.
+            `filter1` is a string of SQL conditionals that defines the boolean criteria for your query. This query should denote the subset of data for which you are interested obtaining a high level summary.
 
 
             The SQL clause supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
             The SQL clause can operate on any metadata you have uploaded and on any prediction values tied to your data.
-            Example q1 filter -- `published > "2024-01-01" AND pred_sale > .8`
+            Example filter1 filter -- `published > '2024-01-01' AND pred_sale > .8`
           schema:
             type: string
-        - name: q2
+        - name: filter2
           in: query
           required: false 
           description: >-
-            `q2` is a string of SQL conditionals that defines the boolean criteria for your query. This query should denote the set of data against which you want to compare your `q1` filter. This field is optional and by default `q1` is compared against the entire corpus.  
+            `filter2` is a string of SQL conditionals that defines the boolean criteria for your query. This query should denote the set of data against which you want to compare your `filter1` filter. This field is optional and by default `filter1` is compared against the entire corpus.  
 
             The SQL clause supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
             The SQL clause can operate on any metadata you have uploaded and on any prediction values tied to your data.
-            Example q1 filter -- `published > "2024-01-01" AND pred_sale > .8`
+            Example filter2 filter -- `published < '2024-01-01' AND pred_sale > .8`
           schema:
             type: string
+        - name: search_query1 
+          in: query
+          required: false
+          schema:
+            type: string
+          description: >-
+            `search_query1` is a search term that defines a fuzzy match criterion by which to filter documents in conjunction with filter1. 
+        - name: search_query2
+          in: query
+          required: false
+          schema:
+            type: string
+          description: >-
+            `search_query2` is a search term that defines a fuzzy match criterion by which to filter documents in conjunction with filter2.
+        - name: semantic_search_weight 
+          in: query
+          schema:
+            type: number
+          required: false
+          description: >-
+            Sets a minimum confidence threshold between 0-1 that a topic changed when comparing filter1 to filter2 with a default of `.3`. The closer to 1, the more emphasis that will be put on topic match. Closer to 0, the more emphasis will be put on exact match. 
+        - name: semantic_search_cutoff
+          in: query
+          schema:
+            type: number
+          required: false
+          description: >-
+            Our semantic search algorithm uses a score called hellinger distance. Unlike cosine distance or dot product, this score has a tangible statistical meaning, that essentially defines the percentage of each paragraph that matches your semantic query. 
+
+
+            Because our models enforce sparsely distributed topics, most docs will have hellinger distances close to 0. The point of this score is to define how heavily focused on your search query you want matching excerpts to be.  
+
+
+            The default of `.05` essentially states that if your query is semantically matched anywhere in the paragraph the document will returned. We reccommend tuning between `.05` to `.2` depending on your use-case. It's best to start low and increase the cutoff as needed.
+
         - name: min_confidence
           in: query
           schema:
             type: number
           required: false
           description: >-
-            Sets a minimum confidence threshold between 0-1 that a topic changed when comparing q1 to q2.
+            Sets a minimum confidence threshold between 0-1 that a topic changed when comparing filter1 to filter2.
+
             
       responses:
         '200':
