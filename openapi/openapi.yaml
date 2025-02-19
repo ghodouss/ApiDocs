@@ -715,24 +715,30 @@ paths:
             application/json:
               example:
                 topics:
-                  - topic_id: 12
-                    short_title: "Topic Title"
-                    one_sentence_summary: "One sentence summary of the topic"
-                    executive_paragraph_summary: "Longer summary of a topic"
-                    prevalence_ratio: 8.3
-                    prevalence: .13
-                    confidence: 98
-                    topic_group_id: 2
-                    topic_group_short_title: "Group Title"
-                  - topic_id: 12
-                    short_title: "Topic Title"
-                    one_sentence_summary: "One sentence summary of the topic"
-                    executive_paragraph_summary: "Longer summary of a topic"
-                    prevalence_ratio: 8.3
-                    prevalence: .13
-                    confidence: 98
-                    topic_group_id: 2
-                    topic_group_short_title: "Group Title"
+                  - conc: 128.54710388183594
+                    confidence: 100
+                    entropy: 6.087007522583008
+                    executive_paragraph_summary: "The discussed theme highlights the increasing demand and development of cutting-edge technologies such as NVIDIA’s Hopper architecture..."
+                    mentions: 224.0
+                    one_sentence_summary: "The theme revolves around the integration of advanced networking, supercomputing, and AI-driven technologies..."
+                    prevalence: 0.10415540829224394
+                    prevalence_ratio: 3.2155791789371686
+                    short_title: "AI Supercomputing Infrastructure"
+                    topic_group_id: 3
+                    topic_group_short_title: "AI and Technology"
+                    topic_id: 140
+                  - conc: 69.0433120727539
+                    confidence: 100
+                    entropy: 5.628466606140137
+                    executive_paragraph_summary: "The theme of generative AI in advertising highlights the transformative impact of AI-driven tools on the ad creation process..."
+                    mentions: 91.0
+                    one_sentence_summary: "Generative AI tools are revolutionizing ad creation by automating the generation of visual assets and ad copy..."
+                    prevalence: 0.09806620073191932
+                    prevalence_ratio: 19.14784485524947
+                    short_title: "Generative AI in Advertising"
+                    topic_group_id: 12
+                    topic_group_short_title: "Customer and User Engagement"
+                    topic_id: 204
               schema:
                 items:
                   $ref: '#/components/schemas/TopicDiffInfo'
@@ -802,14 +808,14 @@ paths:
                     executive_paragraph_summary: "Longer summary of a topic"
                     prevalence: .13
                     topic_group_id: 2
-                    topic_group_short_title: "Group Title"
-                  - topic_id: 12
+                    topic_group_short_title: "Group Title 1"
+                  - topic_id: 18
                     short_title: "Topic Title"
                     one_sentence_summary: "One sentence summary of the topic"
                     executive_paragraph_summary: "Longer summary of a topic"
-                    prevalence: .13
-                    topic_group_id: 2
-                    topic_group_short_title: "Group Title"
+                    prevalence: .09
+                    topic_group_id: 5
+                    topic_group_short_title: "Group Title 2"
               schema:
                 items:
                   $ref: '#/components/schemas/TopicSearchInfo'
@@ -897,7 +903,6 @@ paths:
                 index_id: 'index_05a7cb07da764f1aa399ce65ab06'
                 job_id: '7e5154f4-cfcd-4fc7-94c3-5a168f83'
                 job_name: 'commitIndexV2'
-                result: null
                 startedAt: '2024-11-05T01:41:26.835000+00:00'
                 status: 'CANCELLED'
         '401':
@@ -1071,26 +1076,51 @@ components:
       type: object
       properties:
         topics:
-          type: object
-          properties:
-            topic_id:
-              type: integer
-            short_title:
-              type: string
-            one_sentence_summary:
-              type: string
-            executive_paragraph_summary:
-              type: string
-            prevalence_ratio:
-              type: number 
-            prevalence:
-              type:  number
-            confidence:
-              type: integer
-            topic_group_id:
-              type: integer
-            topic_group_short_title:
-              type: string
+          type: array
+          items:
+            type: object
+            properties:
+              topic_id:
+                type: integer
+                description: Unique identifier for the topic
+              short_title:
+                type: string
+                description: Short descriptive title of the topic
+              topic_group_id:
+                type: integer
+                description: ID of the topic group
+              topic_group_short_title:
+                type: string
+                description: Short title for the topic group
+              confidence:
+                type: integer
+                description: Confidence level (0-100)
+              mentions:
+                type: number
+                format: float
+                description: Number of times the topic is mentioned within filter1 and search_query1
+              prevalence:
+                type: number
+                format: float
+                description: Prevalence of the topic within filter1 and search_query1
+              prevalence_ratio:
+                type: number
+                format: float
+                description: Ratio of prevalence compared in the data defined by filter1 and search_query1 compared to the data defined by filter2 and search_query2
+              conc:
+                type: number
+                format: float
+                description: Concentration score of the topic
+              entropy:
+                type: number
+                format: float
+                description: Entropy measure for the topic
+              executive_paragraph_summary:
+                type: string
+                description: Detailed summary of the topic
+              one_sentence_summary:
+                type: string
+                description: A brief one-sentence summary of the topic
     TopicSearchInfo:
       description: Example of doc upload schema 
       type: object
@@ -1163,6 +1193,7 @@ components:
         result:
           type: object
           description: Output of the job (e.g., 'success' or 'failure'). Only available when job is in SUCCEEDED state.
+          nullable: true
         status:
           type: string
           description: Current status of the job. One of 'PENDING', 'RUNNING', 'CANCELLED', 'SUCCEEDED', 'FAILED'.
