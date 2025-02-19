@@ -866,6 +866,48 @@ paths:
                 error: unauthorized
                 status: 401
 
+  /v1/job/{job_id}/cancel:
+    get:
+      summary: Cancel Job 
+      tags:
+        - api/v1/job
+      description: Cancel a currently running job.
+      operationId: cancelJob 
+      parameters:
+        - name: job_id 
+          in: path
+          required: true
+          schema:
+            type: string 
+        - name: api_key
+          in: query
+          required: true
+          description: API Key.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A dictionary of job metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatus'
+              example:
+                finishedAt: '2024-11-05T01:41:47.637000+00:00'
+                index_id: 'index_05a7cb07da764f1aa399ce65ab06'
+                job_id: '7e5154f4-cfcd-4fc7-94c3-5a168f83'
+                job_name: 'commitIndexV2'
+                result: null
+                startedAt: '2024-11-05T01:41:26.835000+00:00'
+                status: 'CANCELLED'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+
   /v1/job:
     get:
       summary: List Jobs 
