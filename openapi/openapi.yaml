@@ -233,8 +233,7 @@ paths:
           in: query
           required: false
           description: >-
-            A search query that can be used to filter or sort document objects. 
-            By default the search will support a fuzzy match. Any word wrapped in double quotes \"word\" 
+            A search query that defines a fuzzy match criterion by which to filter documents in conjunction with filter1. The parameters `semantic_search_weight` and `semantic_search_cutoff` provide control over the fuzzy matching criterion.
             will be treated as an exact match filter.
           schema:
             type: string
@@ -286,6 +285,11 @@ paths:
             The number of paragraphs above and below the selected excerpt to return.
           schema:
             type: integer
+        - name: max_excerpts_per_doc 
+          in: query
+          required: false
+          schema:
+            type: integer
         - name: limit
           in: query
           required: false
@@ -296,6 +300,27 @@ paths:
           required: false
           schema:
             type: integer
+        - name: semantic_search_weight 
+          in: query
+          schema:
+            type: number
+          required: false
+          description: >-
+            Sets a minimum confidence threshold between 0-1 that a topic changed when comparing filter1 to filter2 with a default of `.3`. The closer to 1, the more emphasis that will be put on topic match. Closer to 0, the more emphasis will be put on exact match. 
+        - name: semantic_search_cutoff
+          in: query
+          schema:
+            type: number
+          required: false
+          description: >-
+            Our semantic search algorithm uses a score called hellinger distance. Unlike cosine distance or dot product, this score has a tangible statistical meaning, that essentially defines the percentage of each paragraph that matches your semantic query. 
+
+
+            Because our models enforce sparsely distributed topics, most docs will have hellinger distances close to 0. The point of this score is to define how heavily focused on your search query you want matching excerpts to be.  
+
+
+            The default of `.05` essentially states that if your query is semantically matched anywhere in the paragraph the document will returned. We reccommend tuning between `.05` to `.2` depending on your use-case. It's best to start low and increase the cutoff as needed.
+
       responses:
         '200':
           description: A list of document objects and a list of high level topics.
@@ -444,12 +469,40 @@ paths:
           in: query
           required: true
           description: >-
-            `query` is a SQL query that defines the data you are interested in. The statment must query the `doc_meta` table for document level information or the `doc_meta_para` table for paragraph level information.
+            `query` is a SQL query that defines the data you are interested in. The statment must query the `doc` table for document level information or the `paragraph` table for paragraph level information.
 
             The SQL query supports any operation available in [duckdb](https://duckdb.org/docs/sql/functions/overview).
-            Example query -- `SELECT doc_id FROM doc_meta WHERE published > "2024-01-01" AND pred_sale > .8`
+            Example query -- `SELECT doc_id FROM doc WHERE published > "2024-01-01" AND pred_sale > .8`
           schema:
             type: string
+        - name: search_query 
+          in: query
+          required: false
+          description: >-
+            `search_query` is a search term that defines a fuzzy match criterion by which to filter documents in conjunction with filter1. The parameters `semantic_search_weight` and `semantic_search_cutoff` provide control over the fuzzy matching criterion.
+          schema:
+            type: string
+        - name: semantic_search_weight 
+          in: query
+          schema:
+            type: number
+          required: false
+          description: >-
+            Sets a minimum confidence threshold between 0-1 that a topic changed when comparing filter1 to filter2 with a default of `.3`. The closer to 1, the more emphasis that will be put on topic match. Closer to 0, the more emphasis will be put on exact match. 
+        - name: semantic_search_cutoff
+          in: query
+          schema:
+            type: number
+          required: false
+          description: >-
+            Our semantic search algorithm uses a score called hellinger distance. Unlike cosine distance or dot product, this score has a tangible statistical meaning, that essentially defines the percentage of each paragraph that matches your semantic query. 
+
+
+            Because our models enforce sparsely distributed topics, most docs will have hellinger distances close to 0. The point of this score is to define how heavily focused on your search query you want matching excerpts to be.  
+
+
+            The default of `.05` essentially states that if your query is semantically matched anywhere in the paragraph the document will returned. We reccommend tuning between `.05` to `.2` depending on your use-case. It's best to start low and increase the cutoff as needed.
+
       responses:
         '200':
           description: A list of dictionaries containing whatever fields you selected. 
@@ -497,11 +550,6 @@ paths:
               example:
                 error: unauthorized
                 status: 401
-      requestBody:
-        content:
-          application/json:
-            schema:
-                $ref: '#/components/schemas/ApiKeyOnly'
 
   /v1/text/index/{index_id}/doc/unstage:
     post:
@@ -533,11 +581,56 @@ paths:
               example:
                 error: unauthorized
                 status: 401
-      requestBody:
-        content:
-          application/json:
-            schema:
-                $ref: '#/components/schemas/ApiKeyOnly'
+
+
+  /v1/text/index/{index_id}/doc/delete/{doc_id}:
+    post:
+      summary: Delete Docs 
+      tags:
+        - api/v1/text/index
+      description: >-
+        Loads a specified set of docs from the index. Supports a comma separated list of up to 500 doc_ids at a time.
+
+        Additionally, the api provides the ability to specify the summary style of the docs by providing either a comma separated list of `topic_ids`, a `topic_group_id`, or a search `query`. The api will extract the most thematically relevant section of the doc to return. 
+
+        The API returns a dictionary containing field `docs` that contains a list of document objects in the order specified in the query.
+
+      operationId: deleteDocs 
+      parameters:
+        - name: index_id
+          in: path
+          required: true
+          schema:
+            type: string 
+        - name: doc_id
+          in: path
+          required: true
+          description: >-
+            A comma separated list of `doc_id`s. The api supports up to 500 per request.
+          schema:
+            type: string 
+        - name: api_key
+          in: header 
+          required: true
+          description: Api Key
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of document objects and a list of high level topics.
+          content:
+            application/json:
+              example:
+                result: 'success'
+                docs_deleted: 28
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              example:
+                error: unauthorized
+                status: 401
+
 
   /v1/text/index/{index_id}/clone:
     post:
@@ -706,7 +799,7 @@ paths:
           schema:
             type: string
           description: >-
-            `search_query1` is a search term that defines a fuzzy match criterion by which to filter documents in conjunction with filter1. 
+            `query` is a search term that defines a fuzzy match criterion by which to filter documents in conjunction with filter1. The parameters `semantic_search_weight` and `semantic_search_cutoff` provide control over the fuzzy matching criterion.
         - name: search_query2
           in: query
           required: false
@@ -810,7 +903,7 @@ paths:
           in: query
           required: false
           description: >-
-            A search query that can be used to summarize document objects. 
+            `query` is a search term that defines a fuzzy match criterion by which to filter documents in conjunction with filter1. The parameters `semantic_search_weight` and `semantic_search_cutoff` provide control over the fuzzy matching criterion.
           schema:
             type: string
         - name: filters 
@@ -823,35 +916,55 @@ paths:
             Example filter -- `published > "2024-01-01" AND pred_sale > .8`
           schema:
             type: string
-        - name: doc_id
-          in: query 
-          required: true
-          description: >-
-            A comma separated list of `doc_id`s. The api supports up to 500 per request.
+        - name: semantic_search_weight 
+          in: query
           schema:
-            type: string 
+            type: number
+          required: false
+          description: >-
+            Sets a minimum confidence threshold between 0-1 that a topic changed when comparing filter1 to filter2 with a default of `.3`. The closer to 1, the more emphasis that will be put on topic match. Closer to 0, the more emphasis will be put on exact match. 
+        - name: semantic_search_cutoff
+          in: query
+          schema:
+            type: number
+          required: false
+          description: >-
+            Our semantic search algorithm uses a score called hellinger distance. Unlike cosine distance or dot product, this score has a tangible statistical meaning, that essentially defines the percentage of each paragraph that matches your semantic query. 
+
+
+            Because our models enforce sparsely distributed topics, most docs will have hellinger distances close to 0. The point of this score is to define how heavily focused on your search query you want matching excerpts to be.  
+
+
+            The default of `.05` essentially states that if your query is semantically matched anywhere in the paragraph the document will returned. We reccommend tuning between `.05` to `.2` depending on your use-case. It's best to start low and increase the cutoff as needed.
+
             
       responses:
         '200':
-          description: A dictionary containing a list of sorted topic diffs. 
+          description: A dictionary containing a list of sorted topics by prevalence.
           content:
             application/json:
               example:
                 topics:
-                  - topic_id: 12
-                    short_title: "Topic Title"
-                    one_sentence_summary: "One sentence summary of the topic"
-                    executive_paragraph_summary: "Longer summary of a topic"
-                    prevalence: .13
-                    topic_group_id: 2
-                    topic_group_short_title: "Group Title 1"
-                  - topic_id: 18
-                    short_title: "Topic Title"
-                    one_sentence_summary: "One sentence summary of the topic"
-                    executive_paragraph_summary: "Longer summary of a topic"
-                    prevalence: .09
-                    topic_group_id: 5
-                    topic_group_short_title: "Group Title 2"
+                  - topic_id: 140
+                    topic_group_id: 3
+                    short_title: "AI Supercomputing Infrastructure"
+                    topic_group_short_title: "AI and Technology"
+                    mentions: 224.0
+                    prevalence: 0.10415540829224394
+                    one_sentence_summary: "The theme revolves around the integration of advanced networking, supercomputing, and AI-driven technologies..."
+                    executive_paragraph_summary: "The discussed theme highlights the increasing demand and development of cutting-edge technologies such as NVIDIA’s Hopper architecture..."
+                    conc: 128.54710388183594
+                    entropy: 6.087007522583008
+                  - topic_id: 204
+                    topic_group_id: 12
+                    short_title: "Generative AI in Advertising"
+                    topic_group_short_title: "Customer and User Engagement"
+                    mentions: 91.0
+                    prevalence: 0.09806620073191932
+                    one_sentence_summary: "Generative AI tools are revolutionizing ad creation by automating the generation of visual assets and ad copy..."
+                    executive_paragraph_summary: "The theme of generative AI in advertising highlights the transformative impact of AI-driven tools on the ad creation process..."
+                    conc: 69.0433120727539
+                    entropy: 5.628466606140137
               schema:
                 items:
                   $ref: '#/components/schemas/TopicSearchInfo'
@@ -1024,12 +1137,6 @@ components:
         To obtain one, please follow these steps:
           - email hello@lit.review requesting an API key
   schemas:
-    ApiKeyOnly:
-      description: API Key 
-      type: object
-      properties:
-        api_key:
-          type: string
     createIndexInput:
       description: Information Needed to create an index 
       type: object
@@ -1108,7 +1215,7 @@ components:
             prediction_class_1: 0.84
             prediction_class_2: 0.04
     TopicDiffInfo:
-      description: Example of doc upload schema 
+      description: Topic Schema 
       type: object
       properties:
         topics:
@@ -1158,26 +1265,47 @@ components:
                 type: string
                 description: A brief one-sentence summary of the topic
     TopicSearchInfo:
-      description: Example of doc upload schema 
+      description: Topic Schema 
       type: object
       properties:
         topics:
-          type: object
-          properties:
-            topic_id:
-              type: integer
-            short_title:
-              type: string
-            one_sentence_summary:
-              type: string
-            executive_paragraph_summary:
-              type: string
-            prevalence:
-              type:  number
-            topic_group_id:
-              type: integer
-            topic_group_short_title:
-              type: string
+          type: array
+          items:
+            type: object
+            properties:
+              topic_id:
+                type: integer
+                description: Unique identifier for the topic
+              short_title:
+                type: string
+                description: Short descriptive title of the topic
+              topic_group_id:
+                type: integer
+                description: ID of the topic group
+              topic_group_short_title:
+                type: string
+                description: Short title for the topic group
+              mentions:
+                type: number
+                format: float
+                description: Number of times the topic is mentioned within filter1 and search_query1
+              prevalence:
+                type: number
+                format: float
+              conc:
+                type: number
+                format: float
+                description: Concentration score of the topic
+              entropy:
+                type: number
+                format: float
+                description: Entropy measure for the topic
+              executive_paragraph_summary:
+                type: string
+                description: Detailed summary of the topic
+              one_sentence_summary:
+                type: string
+                description: A brief one-sentence summary of the topic
     DocUploadInfo:
       description: Example of doc upload schema 
       type: object

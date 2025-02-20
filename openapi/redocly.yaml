@@ -1,0 +1,24 @@
+# redocly.yaml
+apis:
+  sample@v1: 
+    root: openapi.yaml
+
+extends:
+  - recommended
+
+rules:
+  no-unused-components: error
+  no-server-example.com: off
+
+theme:
+  jsonSamplesExpandLevel: 0
+  colors:
+    primary:
+      main: "#f3f1fe"
+  generateCodeSamples:
+    languages:
+      - lang: Python
+      - lang: curl
+      - lang: Node.js
+      - lang: JavaScript
+      - lang: PHP

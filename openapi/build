@@ -1,6 +1,6 @@
 #!/bin/bash
-redocly bundle openapi.yaml --output bundled.yaml
+redocly bundle openapi.yaml --output bundled.yaml --config redocly.yaml
 redocly lint bundled.yaml
-redocly build-docs openapi.yaml --output=output.html
+redocly build-docs openapi.yaml --output=output.html  --config redocly.yaml
 cp output.html /Users/kian/ML/krash/assets/documentation.html 
 redocly preview-docs bundled.yaml
