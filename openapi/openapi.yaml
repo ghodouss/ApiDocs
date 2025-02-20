@@ -1138,14 +1138,14 @@ paths:
                     type: array
                     items:
                       type: number
-                  description: Independent variable data.
+                  description: 2-D array of independent variable data.
                 Y:
                   type: array
                   items:
                     type: array
                     items:
                       type: number
-                  description: Dependent variable data.
+                  description: 2-D array of dependent variable data.
                 override_args:
                   type: string
                   description: Additional arguments for model configuration.
@@ -1186,13 +1186,17 @@ paths:
                 X:
                   type: array
                   items:
-                    type: number
-                  description: Independent variable data.
+                    type: array
+                    items:
+                      type: number
+                  description: 2-D array of independent variable data.
                 Y:
                   type: array
                   items:
-                    type: number
-                  description: Dependent variable data.
+                    type: array
+                    items:
+                      type: number
+                  description: 2-D array of dependent variable data.
                 override_args:
                   type: string
                   description: Additional arguments for model configuration.
@@ -1221,7 +1225,7 @@ paths:
       summary: Sturdy Logistic Regression
       tags:
         - numeric 
-      description: Provides sampling from a Sturdy logistic regression model.
+      description: Provides sampling from a sturdy logistic regression model. This model is extremely resilient to mislabelled data and can reliably detect mislabelled data for datasets with up to 30% error rates.
       operationId: sampleSturdy
       requestBody:
         content:
@@ -1232,13 +1236,17 @@ paths:
                 X:
                   type: array
                   items:
-                    type: number
-                  description: Independent variable data.
+                    type: array
+                    items:
+                      type: number
+                  description: 2-D array of independent variable data.
                 Y:
                   type: array
                   items:
-                    type: number
-                  description: Dependent variable data.
+                    type: array
+                    items:
+                      type: number
+                  description: 2-D array of dependent variable data.
                 override_args:
                   type: string
                   description: Additional arguments for model configuration.
