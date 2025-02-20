@@ -14,7 +14,7 @@ paths:
     post:
       summary: Create Index 
       tags:
-        - api/v1/text/index
+        - text
       description: >-
         Creates a new index.
 
@@ -54,7 +54,7 @@ paths:
     get:
       summary: List Indices
       tags:
-        - api/v1/text/index
+        - text
       description: Returns a list of all indices tied to your API key.
       operationId: listIndicies 
       parameters:
@@ -93,7 +93,7 @@ paths:
     get:
       summary: Single Index Info
       tags:
-        - api/v1/text/index
+        - text
       description: Returns all metadata belonging to the specified index.
       operationId: getSingleIndexInfo 
       parameters:
@@ -136,7 +136,7 @@ paths:
     post:
       summary: Upload Docs 
       tags:
-        - api/v1/text/index
+        - text
       description: >-
         Uploads documents to a temporary staging index for processing and/or storage.  Documents are processed by the AI model if the index has been trained (see the `train` endpoint), and are stored if the parameter `save=true`.
 
@@ -197,7 +197,7 @@ paths:
     get:
       summary: Query Docs 
       tags:
-        - api/v1/text/index
+        - text
       description: >-
         Queries the specified index.  Queries are flexible, and may contain any combination of:
 
@@ -359,7 +359,7 @@ paths:
     get:
       summary: Query Docs by ID 
       tags:
-        - api/v1/text/index
+        - text
       description: >-
         Loads a specified set of docs from the index. Supports a comma separated list of up to 500 doc_ids at a time.
 
@@ -446,7 +446,7 @@ paths:
     get:
       summary: Query Doc Meta 
       tags:
-        - api/v1/text/index
+        - text
       description: >-
         This api allows you to directly run arbitrary
         SQL queries against you index's metadata. The availab
@@ -524,7 +524,7 @@ paths:
     post:
       summary: Commit Docs 
       tags:
-        - api/v1/text/index
+        - text
       description: >-
         Permanently applies all changes made to the staging index to the production index.  Note that `upload` saves new documents only to the staging index; a `commit` is necessary to use those documents for querying or for training.  This is a locking operation: no data can be uploaded, trained, or committed while a commit is in progress.
       operationId: commitDocs 
@@ -555,7 +555,7 @@ paths:
     post:
       summary: Unstage Docs 
       tags:
-        - api/v1/text/index
+        - text
       description: >-
         Reverts all changes to the staging index back, and resets the staging index to match the state of the production index.
       operationId: unstageDocs 
@@ -587,7 +587,7 @@ paths:
     post:
       summary: Delete Docs 
       tags:
-        - api/v1/text/index
+        - text
       description: >-
         Loads a specified set of docs from the index. Supports a comma separated list of up to 500 doc_ids at a time.
 
@@ -636,7 +636,7 @@ paths:
     post:
       summary: Clone Index 
       tags:
-        - api/v1/text/index
+        - text
       description: >-
         Create a deep copy of the selected index.
       operationId: cloneIndex 
@@ -675,7 +675,7 @@ paths:
     post:
       summary: Delete Index 
       tags:
-        - api/v1/text/index
+        - text
       description: >-
         Create a deep copy of the selected index.
       operationId: deleteIndex 
@@ -709,7 +709,7 @@ paths:
     post:
       summary: Train Index 
       tags:
-        - api/v1/text/index
+        - text
       description: >-
         Trains an AI model on all documents in the production index.  Once an index has been trained, documents are queryable (see documentation for the `query` endpoint), and the model automatically processes subsequently uploaded documents (see documentation for the `upload` endpoint).
 
@@ -754,7 +754,7 @@ paths:
     get:
       summary: Topic Diff
       tags:
-        - api/v1/text/index
+        - text
       description: >-
         Returns most conditionally prevalent topics information.
       operationId: getTopicDiff 
@@ -883,7 +883,7 @@ paths:
     get:
       summary: Topic Search
       tags:
-        - api/v1/text/index
+        - text
       description: >-
         Returns most conditionally prevalent topics information.
       operationId: getTopicSearch
@@ -982,7 +982,7 @@ paths:
     get:
       summary: Job Info
       tags:
-        - api/v1/job
+        - job
       description: Returns the status of the current job.
       operationId: getJobStatus
       parameters:
@@ -1025,7 +1025,7 @@ paths:
     get:
       summary: Cancel Job 
       tags:
-        - api/v1/job
+        - job
       description: Cancel a currently running job.
       operationId: cancelJob 
       parameters:
@@ -1066,7 +1066,7 @@ paths:
     get:
       summary: List Jobs 
       tags:
-        - api/v1/job
+        - job
       description: List all jobs matching the filter criteria 
       operationId: listJobs 
       parameters:
@@ -1118,6 +1118,151 @@ paths:
               example:
                 error: unauthorized
                 status: 401
+
+  /v1/numeric/linear:
+    post:
+      summary: Linear Regression
+      tags:
+        - numeric 
+      description: Provides sampling from a linear regression model.
+      operationId: linearRegression 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                X:
+                  type: array
+                  items:
+                    type: array
+                    items:
+                      type: number
+                  description: Independent variable data.
+                Y:
+                  type: array
+                  items:
+                    type: array
+                    items:
+                      type: number
+                  description: Dependent variable data.
+                override_args:
+                  type: string
+                  description: Additional arguments for model configuration.
+              required:
+                - X
+                - Y
+      responses:
+        '200':
+          description: Successful response with job ID and sampling result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                  result:
+                    type: string
+                    description: Binary encoded NetCDF sampling file (arviz compatible).
+        '400':
+          description: Invalid input or missing parameters.
+        '500':
+          description: Internal server error.
+
+  /v1/numeric/logistic:
+    post:
+      summary: Logistic Regression 
+      tags:
+        - numeric 
+      description: Provides sampling from a logistic regression model.
+      operationId: sampleLogistic
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                X:
+                  type: array
+                  items:
+                    type: number
+                  description: Independent variable data.
+                Y:
+                  type: array
+                  items:
+                    type: number
+                  description: Dependent variable data.
+                override_args:
+                  type: string
+                  description: Additional arguments for model configuration.
+              required:
+                - X
+                - Y
+      responses:
+        '200':
+          description: Successful response with job ID and sampling result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                  result:
+                    type: string
+                    description: Binary encoded NetCDF sampling file (arviz compatible).
+        '400':
+          description: Invalid input or missing parameters.
+        '500':
+          description: Internal server error.
+  /v1/numeric/sturdy:
+    post:
+      summary: Sturdy Logistic Regression
+      tags:
+        - numeric 
+      description: Provides sampling from a Sturdy logistic regression model.
+      operationId: sampleSturdy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                X:
+                  type: array
+                  items:
+                    type: number
+                  description: Independent variable data.
+                Y:
+                  type: array
+                  items:
+                    type: number
+                  description: Dependent variable data.
+                override_args:
+                  type: string
+                  description: Additional arguments for model configuration.
+              required:
+                - X
+                - Y
+      responses:
+        '200':
+          description: Successful response with job ID and sampling result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                  result:
+                    type: string
+                    description: Binary encoded NetCDF sampling file (arviz compatible).
+        '400':
+          description: Invalid input or missing parameters.
+        '500':
+          description: Internal server error.
+
 
 servers:
   - url: https://sturdystatistics.com/api
