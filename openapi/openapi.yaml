@@ -3,8 +3,8 @@ info:
   title: Sturdy Statistics API Documentation
   version: 1.0.0
   license:
-    name: unlicensed
-    url: "www.sturdystatistics.com"
+    name: Sturdy Statistics API Documentation 
+    url: "https://sturdystatistics.com"
   description: |-
     Documentation for the suite Sturdy Statistics API solutions.
 
@@ -33,8 +33,8 @@ paths:
                 name: "demo-index"
                 organization_id: "a1865a85-5afc-42f9-9c5a-9e50dcffd961"
                 state: "untrained"
-                stored_bytes: 0
-                creation_timestamp: "Wed, 19 Feb 2025 09:36:03 GMT"
+                stored_bytes: 10295332
+                creation_timestamp: "2025-11-18T19:56:27.913810"
                 last_commit_timestamp: null
                 last_training_timestamp: null
               schema:
@@ -58,7 +58,7 @@ paths:
       description: Returns a list of all indices tied to your API key.
       operationId: listIndicies 
       parameters:
-        - name: api_key
+        - name: x-api-key
           in: header 
           required: true
           description: API Key.
@@ -74,8 +74,8 @@ paths:
                   name: "demo-index"
                   organization_id: "a1865a85-5afc-42f9-9c5a-9e50dcffd961"
                   state: "untrained"
-                  stored_bytes: 0
-                  creation_timestamp: "Wed, 19 Feb 2025 09:36:03 GMT"
+                  stored_bytes: 10295332
+                  creation_timestamp: "2025-11-18T19:56:27.913810"
                   last_commit_timestamp: null
                   last_training_timestamp: null
               schema:
@@ -102,8 +102,8 @@ paths:
           required: true
           schema:
             type: string 
-        - name: api_key
-          in: query
+        - name: x-api-key
+          in: header 
           required: true
           description: API Key.
           schema:
@@ -118,8 +118,8 @@ paths:
                 name: "demo-index"
                 organization_id: "a1865a85-5afc-42f9-9c5a-9e50dcffd961"
                 state: "untrained"
-                stored_bytes: 0
-                creation_timestamp: "Wed, 19 Feb 2025 09:36:03 GMT"
+                stored_bytes: 10295332
+                creation_timestamp: "2025-11-18T19:56:27.913810"
                 last_commit_timestamp: null
                 last_training_timestamp: null
               schema:
@@ -138,7 +138,7 @@ paths:
       tags:
         - text
       description: >-
-        Uploads documents to a temporary staging index for processing and/or storage.  Documents are processed by the AI model if the index has been trained (see the `train` endpoint), and are stored if the parameter `save=true`.
+        Uploads documents to a temporary staging branch for processing and/or storage.  Documents are processed by the AI model if the index has been trained (see the `train` endpoint), and are stored if the parameter `save=true`.
 
 
         Documents are provided as a list of dictionaries.  The content of each document must be plain text and is provided under the required field `doc`.  You may provide a unique document identifier under the optional field `doc_id`.  If no `doc_id` is provided, we will create an identifier by hashing the contents of the document.  Documents can be updated via an upsert mechanism that matches on `doc_id`.  If `doc_id` is not provided and two docs have identical content, the most recently uploaded document will upsert the previously uploaded document.
@@ -152,7 +152,7 @@ paths:
         If you wish to update an existing doc's metadata, you can do a `shallow update` by leaving the `doc` content field either empty or unchanged. The shallow update will the skip the model inference step and only update/append the metadata fields passed into the api. This provides a significant speedup to the api call.
 
 
-        Uploading docs is a locking operation.  A client cannot call upload, train or commit while an upload is already in progress.  Consequently, the operation is more efficient with batches of documents.  The API supports a batch size of up to 1000 documents at a time.  The larger the batch size, the more efficient the upload.
+        Uploading docs is a locking operation.  A client cannot call upload, train or commit while an upload is already in progress.  Consequently, the operation is more efficient with batches of documents.  The API supports a batch size of up to 1000 documents or 10MB at a time.  The larger the batch size, the more efficient the upload.
 
         ### Nota Bene
         
@@ -171,14 +171,14 @@ paths:
           content:
             application/json:
               example:
-                - doc_id: "doc1"
+                - doc_id: "10000013"
                   predictions:
-                    prediction_class_1: 0.84
-                    prediction_class_2: 0.04
-                - doc_id: "doc2"
+                    frustrated_customer: 0.84
+                    sale_made: 0.04
+                - doc_id: "10000038"
                   predictions:
-                    prediction_class_1: 0.84
-                    prediction_class_2: 0.04
+                    frustrated_customer: 0.21
+                    sale_made: 0.91
               schema:
                 items:
                   $ref: '#/components/schemas/DocPredictions'
@@ -208,13 +208,7 @@ paths:
         3. Search.  The query may include a search term to filter documents.  The search is semantic, based on inferred thematic content, but terms enclosed in double quotes will impose an exact match filter.  See documentation for the `query` parameter.
 
 
-        The API returns a dictionary containing three different entries.  Each entry provides a distinct view into how the data in the index matches your query, with increasing degrees of abstraction:
-
-        1. A ranked list of document objects.  This provides a direct list of documents matching the query.  By default these documents are sorted by relevance, but you may optionally specify any metadata field to sort by (see documentation for the `sort_by` parameter).  Each result contains a short excerpt from the document that evinces your query; see documentation for the `summarize_by` parameter for information about this excerpt.  Each result also contains all prediction values associated with the document, all metadata fields associated with the document, and an ordered list of the topics associated with the document.
-
-        2. A ranked list of topic objects.  This thematic information is abstracted from the documents in the index, but still provides a granular summary of the content present in the data which matches the query.  These topic objects are sorted by prevalence (i.e., % occurrence), not relevance (i.e., degree of match to the query).  Each topic has a `topic_id` that can be used for additional downstream queries (see documentation for the `topic_ids` parameter).
-
-        3. A ranked list of topic group objects.  This provides the highest-level overview of the content in the index which matches the query.  These are also sorted by prevalence.  Each topic group has a `topic_group_id` that can be used for additional downstream queries (see documentation for the `topic_group_id` parameter).
+        The API returns a dictionary containing a ranked list of document objects.  This provides a direct list of documents matching the query.  By default these documents are sorted by relevance, but you may optionally specify any metadata field to sort by (see documentation for the `sort_by` parameter).  Each result contains a short excerpt from the document that evinces your query; see documentation for the `summarize_by` parameter for information about this excerpt.  Each result also contains all prediction values associated with the document, all metadata fields associated with the document, and an ordered list of the topics associated with the document.
 
       operationId: getDocs 
       parameters:
@@ -223,7 +217,7 @@ paths:
           required: true
           schema:
             type: string 
-        - name: api_key
+        - name: x-api-key
           in: header 
           required: true
           description: Api Key
@@ -328,25 +322,22 @@ paths:
             application/json:
               example:
                 - docs:
-                  - doc_id: doc_id_1
-                    text: summarize text_1
+                  - doc_id: "11a4bddc-73c9-46f1-8369-7e63ae540e54 "
+                    text: If I'm about to forget my kid's birthday, I want the phone to scream at me until I do something about it.
                     metadata:
-                      metadata_field_1 : "example meta info"
-                      another_meta_field: "more example meta info such as date, title, etc"
-                    predictions:
-                      prediction_field_1: 0.83
-                      another_prediction_field: 0.03
+                      published: "2024-01-13"
+                      author: "Sundar Pichai"
                     topics:
                       - topic_id: 32
-                        short_title: example topic descriptor
+                        short_title: Critical Alerts 
                         prevalence: 0.84
                         topic_group_id: 3
-                        topic_group_short_title: Short Group Title
+                        topic_group_short_title: Effective Technology 
                       - topic_id: 68
-                        short_title: example topic descriptor2
-                        prevalence: 0.05
+                        short_title: Responsible Parenting 
+                        prevalence: 0.09
                         topic_group_id: 5
-                        topic_group_short_title: Short Group Title
+                        topic_group_short_title: Family  
         '401':
           description: Unauthorized
           content:
@@ -381,7 +372,7 @@ paths:
             A comma separated list of `doc_id`s. The api supports up to 500 per request.
           schema:
             type: string 
-        - name: api_key
+        - name: x-api-key
           in: header 
           required: true
           description: Api Key
@@ -426,14 +417,22 @@ paths:
             application/json:
               example:
                 - docs:
-                  - doc_id: doc_id_1
-                    text: summarize text_1
+                  - doc_id: "11a4bddc-73c9-46f1-8369-7e63ae540e54 "
+                    text: If I'm about to forget my kid's birthday, I want the phone to scream at me until I do something about it.
                     metadata:
-                      metadata_field_1 : "example meta info"
-                      another_meta_field: "more example meta info such as date, title, etc"
-                    predictions:
-                      prediction_field_1: 0.83
-                      another_prediction_field: 0.03
+                      published: "2024-01-13"
+                      author: "Sundar Pichai"
+                    topics:
+                      - topic_id: 32
+                        short_title: Critical Alerts 
+                        prevalence: 0.84
+                        topic_group_id: 3
+                        topic_group_short_title: Effective Technology 
+                      - topic_id: 68
+                        short_title: Responsible Parenting 
+                        prevalence: 0.09
+                        topic_group_id: 5
+                        topic_group_short_title: Family  
         '401':
           description: Unauthorized
           content:
@@ -459,7 +458,7 @@ paths:
           required: true
           schema:
             type: string 
-        - name: api_key
+        - name: x-api-key
           in: header 
           required: true
           description: API Key.
@@ -609,7 +608,7 @@ paths:
             A comma separated list of `doc_id`s. The api supports up to 500 per request.
           schema:
             type: string 
-        - name: api_key
+        - name: x-api-key
           in: header 
           required: true
           description: Api Key
@@ -764,7 +763,7 @@ paths:
           required: true
           schema:
             type: string 
-        - name: api_key
+        - name: x-api-key
           in: header 
           required: true
           description: API Key.
@@ -893,7 +892,7 @@ paths:
           required: true
           schema:
             type: string 
-        - name: api_key
+        - name: x-api-key
           in: header 
           required: true
           description: API Key.
@@ -991,7 +990,7 @@ paths:
           required: true
           schema:
             type: string 
-        - name: api_key
+        - name: x-api-key
           in: query
           required: true
           description: API Key.
@@ -1034,7 +1033,7 @@ paths:
           required: true
           schema:
             type: string 
-        - name: api_key
+        - name: x-api-key
           in: query
           required: true
           description: API Key.
@@ -1070,7 +1069,7 @@ paths:
       description: List all jobs matching the filter criteria 
       operationId: listJobs 
       parameters:
-        - name: api_key
+        - name: x-api-key
           in: query
           required: true
           description: API Key.
@@ -1273,7 +1272,7 @@ paths:
 
 
 servers:
-  - url: https://sturdystatistics.com/api
+  - url: https://api.sturdystatistics.com/api
     description: Production server
 security:
   - api_key: []
@@ -1281,7 +1280,7 @@ components:
   securitySchemes:
     api_key:
       type: apiKey
-      name: api_key
+      name: x-api-key
       in: header
       description: >-
         API Key authentication.
@@ -1365,8 +1364,8 @@ components:
             type: number
             format: float
           example:
-            prediction_class_1: 0.84
-            prediction_class_2: 0.04
+            frustrated_customer: 0.84
+            sale_made: 0.04
     TopicDiffInfo:
       description: Topic Schema 
       type: object
