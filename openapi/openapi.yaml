@@ -1328,6 +1328,7 @@ components:
           description: >-
             This parameter sets the maximum number of topics to learn from the data. We support a range of 32-512, with a default of 192. The runtime of training is linear with the number of topics. 
           type: integer
+          default: 192
         label_field_names:
           description: >-
             A list of fields that denote binary labels. The model
@@ -1352,13 +1353,17 @@ components:
           items: 
             type: string
         subdoc_hierarchy:
+          default: true
           description: >-
             This parameter dictates whether to split docs up into paragraphs. Defaults to true.
           type: boolean 
         regex_paragraph_splitter:
+          default: "\n"
           description: >-
             Accepts a custom regex string by which to split up documents. Defaults to '\n'.
+          type: string
         max_paragraph_length:
+          default: 250
           description: >-
             The maximum number of tokens per paragraph. Provides a fallback for semantic chunking in case the regex_paragraph_splitter is too large. Defaults to 250 tokens. Set to a large integer to rely only on the regex_paragraph_splitter.
           type: integer
