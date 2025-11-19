@@ -1337,16 +1337,19 @@ components:
 
 
             Example `["field1","field2"]`. Predictions will be made written to `pred_field1` and `pred_field2`.
+          default: []
           type: array
           items: 
             type: string
         tag_field_names:
           description: >-
-            A list of fields that contain tags. E.g. if a doc has an attribute `genre` it might be tagged with string `fiction,non-fiction,sci-fi`. The presence of a tag implies a True and the absence of a tag implies a False for training input. If that is not that case, consider manually converting your tags to binary and passing those fields into the `label_field_names`
+            A list of fields that contain tags. E.g. if a doc has an attribute `genre` it might be tagged with string `[fiction, non-fiction, sci-fi]`. The presence of a tag implies a True and the absence of a tag implies a False for training input. If that is not that case, consider manually converting your tags to binary and passing those fields into the `label_field_names`
           type: array
+          default: []
           items: 
             type: string
         doc_hierarchy:
+          default: []
           description: >-
             This is used for adding hierarchy to the indexing model by leveraging attributes present in the uploaded data. This is a more advanced feature for those familiar with Bayesian analysis. 
           type: array
