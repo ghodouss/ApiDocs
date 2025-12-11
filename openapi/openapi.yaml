@@ -588,11 +588,9 @@ paths:
       tags:
         - text
       description: >-
-        Loads a specified set of docs from the index. Supports a comma separated list of up to 500 doc_ids at a time.
+        Delete a specified set of documents from the index. Supports a comma separated list of up to 100 doc_ids at a time.
 
-        Additionally, the api provides the ability to specify the summary style of the docs by providing either a comma separated list of `topic_ids`, a `topic_group_id`, or a search `query`. The api will extract the most thematically relevant section of the doc to return. 
-
-        The API returns a dictionary containing field `docs` that contains a list of document objects in the order specified in the query.
+        The API returns a dictionary containing fields `result` and `docs_deleted`.
 
       operationId: deleteDocs 
       parameters:
@@ -616,7 +614,7 @@ paths:
             type: string
       responses:
         '200':
-          description: A list of document objects and a list of high level topics.
+          description: A dictionary containing information about the number of docs deleted. 
           content:
             application/json:
               example:
